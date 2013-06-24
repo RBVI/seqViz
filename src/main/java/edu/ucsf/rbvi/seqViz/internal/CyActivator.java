@@ -20,7 +20,7 @@ import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import edu.ucsf.rbvi.seqViz.internal.model.SeqVizManager;
+import edu.ucsf.rbvi.seqViz.internal.model.ContigsManager;
 import edu.ucsf.rbvi.seqViz.internal.tasks.SeqVizSettingsTaskFactory;
 
 // TODO: Allow opening and closing the molecular navigator dialog
@@ -45,7 +45,7 @@ public class CyActivator extends AbstractCyActivator {
 		}
 
 		// Create the context object
-		SeqVizManager seqManager = new SeqVizManager();
+		ContigsManager seqManager = new ContigsManager();
 
 		// Get a handle on the CyServiceRegistrar
 		CyServiceRegistrar registrar = getService(bc, CyServiceRegistrar.class);

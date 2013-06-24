@@ -3,12 +3,12 @@ package edu.ucsf.rbvi.seqViz.internal.tasks;
 import org.cytoscape.work.AbstractTaskFactory;
 import org.cytoscape.work.TaskIterator;
 
-import edu.ucsf.rbvi.seqViz.internal.model.SeqVizManager;
+import edu.ucsf.rbvi.seqViz.internal.model.ContigsManager;
 
 public class SeqVizSettingsTaskFactory extends AbstractTaskFactory {
-	SeqVizManager manager;
+	ContigsManager manager;
 
-	public SeqVizSettingsTaskFactory(SeqVizManager manager) {
+	public SeqVizSettingsTaskFactory(ContigsManager manager) {
 		this.manager = manager;
 	}
 
