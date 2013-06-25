@@ -13,11 +13,11 @@ import edu.ucsf.rbvi.seqViz.internal.model.ContigsManager;
  * @author aywu
  *
  */
-public abstract class ReadsReader {
+public abstract class AbstractMapOutputReader {
 	
 	protected ContigsManager contigs;
 	
-	public ReadsReader(ContigsManager contigs) {
+	public AbstractMapOutputReader(ContigsManager contigs) {
 		this.contigs = contigs;
 	}
 	/**

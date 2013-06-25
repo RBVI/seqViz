@@ -11,7 +11,7 @@ import org.cytoscape.work.TaskMonitor;
 import edu.ucsf.rbvi.seqViz.internal.model.ContigsManager;
 import edu.ucsf.rbvi.seqViz.internal.model.Read;
 
-public class SAMReader extends ReadsReader {
+public class SAMReader extends AbstractMapOutputReader {
 
 	public SAMReader(ContigsManager contigs) {
 		super(contigs);
@@ -30,6 +30,7 @@ public class SAMReader extends ReadsReader {
 				int flags = Integer.parseInt(fields[1]);
 				boolean matePair = (flags & 1) == 0 ? false: true,
 						aligned = (flags & 4) == 0 ? true: false,
+						reverseAligned = (flags & 8) == 0 ? true: false,
 						reverse = (flags & 16) == 0 ? false: true,
 						mateReverse = (flags & 32) == 0 ? false: true,
 						mate1 = (flags & 64) == 0 ? false: true,
@@ -38,22 +39,28 @@ public class SAMReader extends ReadsReader {
 				int locus = Integer.parseInt(fields[3]);
 				String seq = fields[9];
 				int score = 0;
-				if (fields.length >= 12)
-					score = Integer.parseInt(fields[11].split(":")[2]);
+				if (fields.length >= 12) {
+					try {
+						score = Integer.parseInt(fields[11].split(":")[2]);
+					}
+					catch (Exception e) {score = 0;}
+				}
 				if (prevReadName == null || ! readName.equals(prevReadName)) {
 					read1 = null;
 					read2 = null;
 				}
-				if (contigs == null) throw new Exception("ContigManager not initialized.");
-				if (mate1) {
-					if (read1 == null)
-						read1 = new Read(readName, true, seq.length(), "");
-					contigs.addRead(contig, read1, score, locus, !reverse);
-				}
-				if (mate2) {
-					if (read2 == null)
-						read2 = new Read(readName, false, seq.length(), "");
-					contigs.addRead(contig, read2, score, locus, !reverse);
+				if (aligned) {
+					if (contigs == null) throw new Exception("ContigManager not initialized.");
+					if (mate1) {
+						if (read1 == null)
+							read1 = new Read(readName, true, seq.length(), seq);
+						contigs.addRead(contig, read1, score, locus, !reverse);
+					}
+					if (mate2) {
+						if (read2 == null)
+							read2 = new Read(readName, false, seq.length(), seq);
+						contigs.addRead(contig, read2, score, locus, !reverse);
+					}
 				}
 				prevReadName = readName;
 			}

@@ -12,6 +12,9 @@ import edu.ucsf.rbvi.seqViz.internal.model.ContigsManager;
 
 public class ReadFASTAContigsTask extends AbstractReadContigsTask {
 	
+	@Tunable(description="File containing the contigs", params="input=true;fileCategory=unspecified")
+	public File contigsFile;
+	
 	public ReadFASTAContigsTask(ContigsManager manager) {
 		super(manager);
 		// TODO Auto-generated constructor stub
@@ -21,19 +24,23 @@ public class ReadFASTAContigsTask extends AbstractReadContigsTask {
 	public void run(TaskMonitor arg0) throws Exception {
 		// TODO Auto-generated method stub
 		BufferedReader reader = new BufferedReader(new FileReader(contigsFile));
-		String line, header = " ";
+		String line, header = "";
 		StringBuilder seq = new StringBuilder();
 		while ((line = reader.readLine()) != null) {
 			line = line.trim();
 			if (line.charAt(0) == '>') {
-				if (line.length() > 1)
-					header = line.substring(1);
-				else header = "";
+			//	System.out.println(header);
+			//	System.out.println(seq.toString());
 				manager.addContig(header, new Contig(seq.toString()));
 				seq = new StringBuilder();
+				if (line.length() > 1) {
+					header = line.substring(1).split(" ")[0];
+				}
 			}
 			else seq = seq.append(line);
 		}
+	//	System.out.println(header);
+	//	System.out.println(seq.toString());
 		manager.addContig(header, new Contig(seq.toString()));
 	}
 

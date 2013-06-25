@@ -12,12 +12,6 @@ import edu.ucsf.rbvi.seqViz.internal.model.ContigsManager;
 public abstract class AbstractMapReadsTask extends AbstractTask {
 
 	protected ContigsManager contigs;
-	@Tunable(description="File containing the contigs",params="input=true;fileCategory=unspecified")
-	public File contigsFile;
-	@Tunable(description="File containing reads of mate2", params="input=true;fileCategory=unspecified")
-	public File mate2;
-	@Tunable(description="File containing reads of mate1", params="input=true;fileCategory=unspecified")
-	public File mate1;
 	
 	/**
 	 * AbstractMaperReaders is an abstract class that serves as an interface to map reads to

@@ -22,7 +22,7 @@ public class ContigsManager {
 		settings = null;
 	}
 	
-	public void addSettings(SeqVizSettings settings) {
+	public void initializeSettings(SeqVizSettings settings) {
 		this.settings = settings;
 	}
 	

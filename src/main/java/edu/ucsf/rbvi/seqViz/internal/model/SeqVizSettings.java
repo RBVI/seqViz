@@ -4,9 +4,11 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.ucsf.rbvi.seqViz.internal.tasks.ReadsReader;
+import edu.ucsf.rbvi.seqViz.internal.tasks.AbstractMapReadsTask;
+import edu.ucsf.rbvi.seqViz.internal.tasks.AbstractMapOutputReader;
 
 public class SeqVizSettings {
+	public AbstractMapReadsTask mapReads;
 	public int threads;
 	public String mapper_dir;
 	public String options;
@@ -27,7 +29,8 @@ public class SeqVizSettings {
 	 * @param mapContigs File containing the contigs the mapper will map to.
 	 * @param contigReader A class that parses a contig file and stores it in ContigsManager.
 	 */
-	public SeqVizSettings(int threads, String mapper_dir, /*String options,*/ String temp_dir/*, File contigs, File mapContigs*/) {
+	public SeqVizSettings(AbstractMapReadsTask mapReads, int threads, String mapper_dir, /*String options,*/ String temp_dir/*, File contigs, File mapContigs*/) {
+		this.mapReads = mapReads;
 		this.threads = threads;
 	/*	this.options = options; */
 		this.mapper_dir = mapper_dir;

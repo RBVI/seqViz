@@ -21,6 +21,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.ucsf.rbvi.seqViz.internal.model.ContigsManager;
+import edu.ucsf.rbvi.seqViz.internal.tasks.MapReadsTaskFactory;
+import edu.ucsf.rbvi.seqViz.internal.tasks.ReadFASTAContigsTaskFactory;
 import edu.ucsf.rbvi.seqViz.internal.tasks.SeqVizSettingsTaskFactory;
 
 // TODO: Allow opening and closing the molecular navigator dialog
@@ -67,6 +69,29 @@ public class CyActivator extends AbstractCyActivator {
 		settingsProps.setProperty(MENU_GRAVITY, "10.0");
 		registerService(bc, settingsTask, TaskFactory.class, settingsProps);
 
+		ReadFASTAContigsTaskFactory readFASTAContigsTask = new ReadFASTAContigsTaskFactory(seqManager);
+		Properties readFASTAProps = new Properties();
+		readFASTAProps.setProperty(PREFERRED_MENU, "Apps.SeqViz.Load contigs file");
+		readFASTAProps.setProperty(TITLE, "FASTA");
+		readFASTAProps.setProperty(COMMAND, "contigsFile");
+		readFASTAProps.setProperty(COMMAND_NAMESPACE, "seqViz");
+		readFASTAProps.setProperty(IN_MENU_BAR, "true");
+		// settingsProps.setProperty(ENABLE_FOR, "network");
+		// readFASTAProps.setProperty(INSERT_SEPARATOR_BEFORE, "true");
+		readFASTAProps.setProperty(MENU_GRAVITY, "11.0");
+		registerService(bc, readFASTAContigsTask, TaskFactory.class, readFASTAProps);
+		
+		MapReadsTaskFactory mapReadsTask = new MapReadsTaskFactory(seqManager);
+		Properties mapReadsProps = new Properties();
+		mapReadsProps.setProperty(PREFERRED_MENU, "Apps.SeqViz");
+		mapReadsProps.setProperty(TITLE, "Map Reads");
+		mapReadsProps.setProperty(COMMAND, "mapReads");
+		mapReadsProps.setProperty(COMMAND_NAMESPACE, "seqViz");
+		mapReadsProps.setProperty(IN_MENU_BAR, "true");
+		// settingsProps.setProperty(ENABLE_FOR, "network");
+		// mapReadsProps.setProperty(INSERT_SEPARATOR_BEFORE, "true");
+		mapReadsProps.setProperty(MENU_GRAVITY, "12.0");
+		registerService(bc, mapReadsTask, TaskFactory.class, mapReadsProps);
 	}
 
 }

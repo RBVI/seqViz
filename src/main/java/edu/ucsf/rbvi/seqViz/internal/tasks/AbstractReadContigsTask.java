@@ -10,9 +10,6 @@ import edu.ucsf.rbvi.seqViz.internal.model.ContigsManager;
 
 public abstract class AbstractReadContigsTask extends AbstractTask {
 	
-	@Tunable(description="File containing the contigs", params="input=true;fileCategory=unspecified")
-	public File contigsFile;
-	
 	protected ContigsManager manager;
 	
 	public AbstractReadContigsTask(ContigsManager manager) {

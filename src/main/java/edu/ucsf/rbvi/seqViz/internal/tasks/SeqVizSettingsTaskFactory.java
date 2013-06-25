@@ -15,5 +15,5 @@ public class SeqVizSettingsTaskFactory extends AbstractTaskFactory {
 	public boolean isReady() { return true; }
 	
 	// TODO
-	public TaskIterator createTaskIterator() { return null; }
+	public TaskIterator createTaskIterator() { return new TaskIterator(new SeqVizSettingsTask(manager)); }
 }
