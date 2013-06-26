@@ -10,6 +10,7 @@ import org.cytoscape.work.TaskMonitor;
 
 import edu.ucsf.rbvi.seqViz.internal.model.ContigsManager;
 import edu.ucsf.rbvi.seqViz.internal.model.Read;
+import edu.ucsf.rbvi.seqViz.internal.model.ReadMappingInfo;
 
 public class SAMReader extends AbstractMapOutputReader {
 
@@ -21,12 +22,13 @@ public class SAMReader extends AbstractMapOutputReader {
 	public void readReads(InputStream stream, TaskMonitor monitor, int reads) throws Exception {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
 		if (contigs == null) throw new Exception("The scaffold has not been created.");
-		String line, readName, prevReadName = null;
+		String line, readName = null, prevReadName = null;
 		while ((line = reader.readLine()) != null) {
 			String[] fields = line.split("\t");
 			Read read1 = null, read2 = null;
 			if (fields.length >= 11) {
-				readName = fields[0];
+				if (! fields[0].equals(readName))
+					readName = fields[0];
 				int flags = Integer.parseInt(fields[1]);
 				boolean matePair = (flags & 1) == 0 ? false: true,
 						aligned = (flags & 4) == 0 ? true: false,
@@ -54,12 +56,14 @@ public class SAMReader extends AbstractMapOutputReader {
 					if (mate1) {
 						if (read1 == null)
 							read1 = new Read(readName, true, seq.length(), seq);
-						contigs.addRead(contig, read1, score, locus, !reverse);
+						contigs.addRead(contig, new ReadMappingInfo(read1, score, locus, !reverse));
+					//	contigs.addRead(contig, read1, score, locus, !reverse);
 					}
 					if (mate2) {
 						if (read2 == null)
 							read2 = new Read(readName, false, seq.length(), seq);
-						contigs.addRead(contig, read2, score, locus, !reverse);
+						contigs.addRead(contig, new ReadMappingInfo(read2, score, locus, !reverse));
+					//	contigs.addRead(contig, read2, score, locus, !reverse);
 					}
 				}
 				prevReadName = readName;

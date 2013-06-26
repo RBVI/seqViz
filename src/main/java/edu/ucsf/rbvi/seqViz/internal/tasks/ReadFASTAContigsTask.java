@@ -24,6 +24,7 @@ public class ReadFASTAContigsTask extends AbstractReadContigsTask {
 	public void run(TaskMonitor arg0) throws Exception {
 		// TODO Auto-generated method stub
 		BufferedReader reader = new BufferedReader(new FileReader(contigsFile));
+		manager.getSettings().contigs = contigsFile;
 		String line, header = "";
 		StringBuilder seq = new StringBuilder();
 		while ((line = reader.readLine()) != null) {
@@ -42,6 +43,7 @@ public class ReadFASTAContigsTask extends AbstractReadContigsTask {
 	//	System.out.println(header);
 	//	System.out.println(seq.toString());
 		manager.addContig(header, new Contig(seq.toString()));
+		manager.displayContigs();
 	}
 
 }

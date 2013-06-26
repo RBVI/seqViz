@@ -12,6 +12,9 @@ import static org.cytoscape.work.ServiceProperties.TITLE;
 import java.util.Properties;
 
 import org.cytoscape.application.swing.CySwingApplication;
+import org.cytoscape.model.CyNetwork;
+import org.cytoscape.model.CyNetworkFactory;
+import org.cytoscape.model.CyNetworkManager;
 import org.cytoscape.service.util.AbstractCyActivator;
 import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.work.TaskFactory;
@@ -45,9 +48,16 @@ public class CyActivator extends AbstractCyActivator {
 			haveGUI = false;
 			// Issue error and return
 		}
-
+		
+		CyNetworkFactory networkFactory = getService(bc, CyNetworkFactory.class);
+		CyNetwork network = networkFactory.createNetwork();
+		network.getRow(network).set(CyNetwork.NAME, "");
+		
+		CyNetworkManager networkManager = getService(bc, CyNetworkManager.class);
+		networkManager.addNetwork(network);
+		
 		// Create the context object
-		ContigsManager seqManager = new ContigsManager();
+		ContigsManager seqManager = new ContigsManager(network);
 
 		// Get a handle on the CyServiceRegistrar
 		CyServiceRegistrar registrar = getService(bc, CyServiceRegistrar.class);
@@ -78,7 +88,7 @@ public class CyActivator extends AbstractCyActivator {
 		readFASTAProps.setProperty(IN_MENU_BAR, "true");
 		// settingsProps.setProperty(ENABLE_FOR, "network");
 		// readFASTAProps.setProperty(INSERT_SEPARATOR_BEFORE, "true");
-		readFASTAProps.setProperty(MENU_GRAVITY, "11.0");
+		readFASTAProps.setProperty(MENU_GRAVITY, "9.0");
 		registerService(bc, readFASTAContigsTask, TaskFactory.class, readFASTAProps);
 		
 		MapReadsTaskFactory mapReadsTask = new MapReadsTaskFactory(seqManager);
@@ -90,7 +100,7 @@ public class CyActivator extends AbstractCyActivator {
 		mapReadsProps.setProperty(IN_MENU_BAR, "true");
 		// settingsProps.setProperty(ENABLE_FOR, "network");
 		// mapReadsProps.setProperty(INSERT_SEPARATOR_BEFORE, "true");
-		mapReadsProps.setProperty(MENU_GRAVITY, "12.0");
+		mapReadsProps.setProperty(MENU_GRAVITY, "8.0");
 		registerService(bc, mapReadsTask, TaskFactory.class, mapReadsProps);
 	}
 

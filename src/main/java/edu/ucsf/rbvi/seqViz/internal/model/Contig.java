@@ -3,6 +3,8 @@ package edu.ucsf.rbvi.seqViz.internal.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.cytoscape.model.CyNode;
+
 /**
  * The Contig class contains information about each contig such as sequence and potentially other
  * information, along with the reads that map to it.
@@ -12,6 +14,7 @@ import java.util.List;
  */
 public class Contig {
 	private String sequence;
+	CyNode node;
 	private List<ReadMappingInfo> reads;
 	
 	/**
@@ -23,6 +26,7 @@ public class Contig {
 	public Contig(String sequence) {
 		this.sequence = sequence;
 		this.reads = new ArrayList<ReadMappingInfo>();
+		this.node = null;
 	}
 	
 	/**
