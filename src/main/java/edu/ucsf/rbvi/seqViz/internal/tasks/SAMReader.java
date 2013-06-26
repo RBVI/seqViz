@@ -69,6 +69,7 @@ public class SAMReader extends AbstractMapOutputReader {
 				prevReadName = readName;
 			}
 		}
+		contigs.displayBridgingReads();
 	}
 
 }

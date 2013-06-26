@@ -44,18 +44,26 @@ public class ReadPair {
 	}
 	
 	public Set<String> getMate1Contigs() {
-		return mate1.keySet();
+		if (mate1 != null)
+			return mate1.keySet();
+		else return null;
 	}
 	
 	public Set<String> getMate2Contigs() {
-		return mate2.keySet();
+		if (mate2 != null)
+			return mate2.keySet();
+		else return null;
 	}
 	
 	public List<ReadMappingInfo> getReadMappingInfoMate1(String contig) {
-		return mate1.get(contig);
+		if (mate1 != null)
+			return mate1.get(contig);
+		else return null;
 	}
 	
 	public List<ReadMappingInfo> getReadMappingInfoMate2(String contig) {
-		return mate2.get(contig);
+		if (mate1 != null)
+			return mate2.get(contig);
+		else return null;
 	}
 }

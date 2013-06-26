@@ -109,15 +109,16 @@ public class ContigsManager {
 								edgeNamesPlusMinus = new HashMap<String, CyEdge>(),
 								edgeNamesMinusPlus = new HashMap<String, CyEdge>(),
 								edgeNamesMinusMinus = new HashMap<String, CyEdge>();
-		HashMap<String, Float>	edgeWeightPlusPlus = new HashMap<String, Float>(),
-								edgeWeightPlusMinus = new HashMap<String, Float>(),
-								edgeWeightMinusPlus = new HashMap<String, Float>(),
-								edgeWeightMinusMinus = new HashMap<String, Float>();
-		if (edges.getColumn("weight") != null)
-			edges.createColumn("weight", Float.class, false);
+		HashMap<String, Double>	edgeWeightPlusPlus = new HashMap<String, Double>(),
+								edgeWeightPlusMinus = new HashMap<String, Double>(),
+								edgeWeightMinusPlus = new HashMap<String, Double>(),
+								edgeWeightMinusMinus = new HashMap<String, Double>();
+	/*	if (edges.getColumn("weight") != null)
+			edges.createColumn("weight", Double.class, false);
 		if (edges.getColumn("orientation") != null)
-			edges.createColumn("orientation", String.class, false);
+			edges.createColumn("orientation", String.class, false); */
 		for (ReadPair p: readPairs.values()) {
+			if (p.getMate1Contigs() != null && p.getMate2Contigs() != null)
 			for (String contig1: p.getMate1Contigs())
 				for (String contig2: p.getMate2Contigs()) {
 					if (! contig1.equals(contig2)) {
@@ -157,7 +158,7 @@ public class ContigsManager {
 									}
 									if (edgeWeightPlusPlus.containsKey(edgeName))
 										edgeWeightPlusPlus.put(edgeName, edgeWeightPlusPlus.get(edgeName) + 1);
-									else edgeWeightPlusPlus.put(edgeName, new Float(1.0));
+									else edgeWeightPlusPlus.put(edgeName, new Double(1.0));
 								}
 								else if (read1Orientation && ! read2Orientation) {
 									if (edgeNamesPlusMinus.containsKey(edgeName))
@@ -168,7 +169,7 @@ public class ContigsManager {
 									}
 									if (edgeWeightPlusMinus.containsKey(edgeName))
 										edgeWeightPlusMinus.put(edgeName, edgeWeightPlusMinus.get(edgeName) + 1);
-									else edgeWeightPlusMinus.put(edgeName, new Float(1.0));
+									else edgeWeightPlusMinus.put(edgeName, new Double(1.0));
 								}
 								else if (! read1Orientation && read2Orientation) {
 									if (edgeNamesMinusPlus.containsKey(edgeName))
@@ -179,7 +180,7 @@ public class ContigsManager {
 									}
 									if (edgeWeightMinusPlus.containsKey(edgeName))
 										edgeWeightMinusPlus.put(edgeName, edgeWeightMinusPlus.get(edgeName) + 1);
-									else edgeWeightMinusPlus.put(edgeName, new Float(1.0));
+									else edgeWeightMinusPlus.put(edgeName, new Double(1.0));
 								}
 								else if (! read1Orientation && ! read2Orientation) {
 									if (edgeNamesMinusMinus.containsKey(edgeName))
@@ -190,28 +191,36 @@ public class ContigsManager {
 									}
 									if (edgeWeightMinusMinus.containsKey(edgeName))
 										edgeWeightMinusMinus.put(edgeName, edgeWeightMinusMinus.get(edgeName) + 1);
-									else edgeWeightMinusMinus.put(edgeName, new Float(1.0));
+									else edgeWeightMinusMinus.put(edgeName, new Double(1.0));
 								}
 							}
 					}
 				}
 		}
 		CyTable table = network.getDefaultEdgeTable();
+		if (table.getColumn("weight") == null)
+			table.createColumn("weight", Double.class, false);
+		if (table.getColumn("orientation") == null)
+			table.createColumn("orientation", String.class, false);
 		for (String s: edgeNamesPlusPlus.keySet()) {
-			table.getRow(edgeNamesPlusPlus.get(s)).set("weight", edgeWeightPlusPlus.get(s));
-			table.getRow(edgeNamesPlusPlus.get(s)).set("orientation", "plusplus");
+			table.getRow(edgeNamesPlusPlus.get(s).getSUID()).set(CyNetwork.NAME, s);
+			table.getRow(edgeNamesPlusPlus.get(s).getSUID()).set("weight", edgeWeightPlusPlus.get(s));
+			table.getRow(edgeNamesPlusPlus.get(s).getSUID()).set("orientation", "plusplus");
 		}
 		for (String s: edgeNamesPlusMinus.keySet()) {
-			table.getRow(edgeNamesPlusMinus.get(s)).set("weight", edgeWeightPlusPlus.get(s));
-			table.getRow(edgeNamesPlusMinus.get(s)).set("orientation", "plusminus");			
+			table.getRow(edgeNamesPlusMinus.get(s).getSUID()).set(CyNetwork.NAME, s);
+			table.getRow(edgeNamesPlusMinus.get(s).getSUID()).set("weight", edgeWeightPlusMinus.get(s));
+			table.getRow(edgeNamesPlusMinus.get(s).getSUID()).set("orientation", "plusminus");			
 		}
 		for (String s: edgeNamesMinusPlus.keySet()) {
-			table.getRow(edgeNamesMinusPlus.get(s)).set("weight", edgeWeightPlusPlus.get(s));
-			table.getRow(edgeNamesMinusPlus.get(s)).set("orientation", "minusplus");
+			table.getRow(edgeNamesMinusPlus.get(s).getSUID()).set(CyNetwork.NAME, s);
+			table.getRow(edgeNamesMinusPlus.get(s).getSUID()).set("weight", edgeWeightMinusPlus.get(s));
+			table.getRow(edgeNamesMinusPlus.get(s).getSUID()).set("orientation", "minusplus");
 		}
 		for (String s: edgeNamesMinusMinus.keySet()) {
-			table.getRow(edgeNamesMinusMinus.get(s)).set("weight", edgeWeightPlusPlus.get(s));
-			table.getRow(edgeNamesMinusMinus.get(s)).set("orientation", "minusminus");
+			table.getRow(edgeNamesMinusMinus.get(s).getSUID()).set(CyNetwork.NAME, s);
+			table.getRow(edgeNamesMinusMinus.get(s).getSUID()).set("weight", edgeWeightMinusMinus.get(s));
+			table.getRow(edgeNamesMinusMinus.get(s).getSUID()).set("orientation", "minusminus");
 		}
 	}
 }

@@ -25,14 +25,15 @@ public class ReadFASTAContigsTask extends AbstractReadContigsTask {
 		// TODO Auto-generated method stub
 		BufferedReader reader = new BufferedReader(new FileReader(contigsFile));
 		manager.getSettings().contigs = contigsFile;
-		String line, header = "";
+		String line, header = null;
 		StringBuilder seq = new StringBuilder();
 		while ((line = reader.readLine()) != null) {
 			line = line.trim();
 			if (line.charAt(0) == '>') {
 			//	System.out.println(header);
 			//	System.out.println(seq.toString());
-				manager.addContig(header, new Contig(seq.toString()));
+				if (header != null)
+					manager.addContig(header, new Contig(seq.toString()));
 				seq = new StringBuilder();
 				if (line.length() > 1) {
 					header = line.substring(1).split(" ")[0];
