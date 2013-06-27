@@ -37,7 +37,8 @@ public class SAMReader extends AbstractMapOutputReader {
 						mateReverse = (flags & 32) == 0 ? false: true,
 						mate1 = (flags & 64) == 0 ? false: true,
 						mate2 = (flags & 128) == 0 ? false: true;
-				String contig = fields[2];
+				String contig = fields[2], mateContig = fields[6];
+				boolean sameContig = mateContig.equals("=") ? true: false;
 				int locus = Integer.parseInt(fields[3]);
 				String seq = fields[9];
 				int score = 0;
@@ -56,13 +57,13 @@ public class SAMReader extends AbstractMapOutputReader {
 					if (mate1) {
 						if (read1 == null)
 							read1 = new Read(readName, true, seq.length(), seq);
-						contigs.addRead(contig, new ReadMappingInfo(read1, score, locus, !reverse));
+						contigs.addRead(contig, new ReadMappingInfo(read1, score, locus, !reverse, sameContig));
 					//	contigs.addRead(contig, read1, score, locus, !reverse);
 					}
 					if (mate2) {
 						if (read2 == null)
 							read2 = new Read(readName, false, seq.length(), seq);
-						contigs.addRead(contig, new ReadMappingInfo(read2, score, locus, !reverse));
+						contigs.addRead(contig, new ReadMappingInfo(read2, score, locus, !reverse, sameContig));
 					//	contigs.addRead(contig, read2, score, locus, !reverse);
 					}
 				}

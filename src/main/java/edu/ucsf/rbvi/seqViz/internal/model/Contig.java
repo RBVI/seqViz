@@ -37,8 +37,8 @@ public class Contig {
 	 * @param locus left-most position the read maps with respect to the contig
 	 * @param strand orientation the read maps to the contig ('true' for +, 'false' for -)
 	 */
-	public void addRead(Read read, int score, int locus, boolean strand) {
-		reads.add(new ReadMappingInfo(read, score, locus, strand));
+	public void addRead(Read read, int score, int locus, boolean strand, boolean sameContig) {
+		reads.add(new ReadMappingInfo(read, score, locus, strand, sameContig));
 	}
 	
 	/**

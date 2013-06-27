@@ -6,6 +6,7 @@ public class ReadMappingInfo {
 	private int score;
 	private int locus;
 	private boolean strand;
+	private boolean sameContig;
 	
 	/**
 	 * ReadMappingInfo stores information gained when mapping reads to the reference sequence
@@ -15,11 +16,12 @@ public class ReadMappingInfo {
 	 * @param locus The position the read maps
 	 * @param strand The orientation the read maps ('true' for +, 'false' for -)
 	 */
-	public ReadMappingInfo(Read read, int score, int locus, boolean strand) {
+	public ReadMappingInfo(Read read, int score, int locus, boolean strand, boolean sameContig) {
 		this.read = read;
 		this.score = score;
 		this.locus = locus;
 		this.strand = strand;
+		this.sameContig = sameContig;
 	}
 	
 	/**
@@ -47,4 +49,6 @@ public class ReadMappingInfo {
 	 * @return 'true' if read maps to + strand, - if read maps to - strand.
 	 */
 	public boolean strand() {return strand;}
+	
+	public boolean sameContig() {return sameContig;}
 }
