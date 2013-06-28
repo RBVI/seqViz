@@ -13,7 +13,7 @@ public class MapReadsTaskFactory extends AbstractTaskFactory {
 		this.manager = manager;
 	}
 	
-	public boolean isReady() { return manager.isInitialized(); }
+	public boolean isReady() { return manager.isInitialized() && manager.mapperSettingsIntiialized(); }
 	
 	public TaskIterator createTaskIterator() {
 		// TODO Auto-generated method stub

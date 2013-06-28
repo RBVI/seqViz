@@ -30,8 +30,16 @@ public class SeqVizSettingsTask extends AbstractTask {
 	@Override
 	public void run(TaskMonitor arg0) throws Exception {
 		// TODO Auto-generated method stub
-		if (mapper.getSelectedValue().equals(mapperChoice[0]))
-			manager.initializeSettings(new SeqVizSettings(new BowtieMapReadsTask(manager), 2, mapDir, tempDir));
+		if (mapper.getSelectedValue().equals(mapperChoice[0])) {
+			if (!manager.isInitialized())
+				manager.initializeSettings(new SeqVizSettings(new BowtieMapReadsTask(manager), 2, mapDir, tempDir));
+			else {
+				manager.getSettings().mapReads = new BowtieMapReadsTask(manager);
+				manager.getSettings().threads = 2;
+				manager.getSettings().mapper_dir = mapDir;
+				manager.getSettings().temp_dir = tempDir;
+			}
+		}
 	}
 
 }

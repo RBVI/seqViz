@@ -39,4 +39,6 @@ public class SeqVizSettings {
 		this.mapContigs = mapContigs; */
 	}
 	
+	public SeqVizSettings() {threads = 2;}
+	
 }

@@ -29,7 +29,7 @@ public class ContigsManager {
 		contigs = new HashMap<String, Contig>();
 		readPairs = new HashMap<String, ReadPair>();
 		this.network = network;
-		settings = null;
+		settings = new SeqVizSettings();
 	}
 	
 	public void initializeSettings(SeqVizSettings settings) {
@@ -39,6 +39,10 @@ public class ContigsManager {
 	public boolean isInitialized() {
 		if (settings != null) return true;
 		else return false;
+	}
+	
+	public boolean mapperSettingsIntiialized() {
+		return settings.mapReads != null && settings.mapper_dir != null && settings.temp_dir != null && settings.threads != 0;
 	}
 	
 	public SeqVizSettings getSettings() {return settings;}
@@ -113,8 +117,15 @@ public class ContigsManager {
 								edgeWeightPlusMinus = new HashMap<String, Double>(),
 								edgeWeightMinusPlus = new HashMap<String, Double>(),
 								edgeWeightMinusMinus = new HashMap<String, Double>();
+		HashMap<String, Long>	edgeCountPlusPlus = new HashMap<String, Long>(),
+								edgeCountPlusMinus = new HashMap<String, Long>(),
+								edgeCountMinusPlus = new HashMap<String, Long>(),
+								edgeCountMinusMinus = new HashMap<String, Long>();
 		for (ReadPair p: readPairs.values()) {
-			if (p.getMate1Contigs() != null && p.getMate2Contigs() != null)
+			if (p.getMate1Contigs() != null && p.getMate2Contigs() != null) {
+				int links = p.getMate1Contigs().size() > p.getMate2Contigs().size() ?
+						p.getMate1Contigs().size(): p.getMate2Contigs().size();
+				double weight = 1.0 / (double) links;
 			for (String contig1: p.getMate1Contigs())
 				for (String contig2: p.getMate2Contigs()) {
 					if (! contig1.equals(contig2)) {
@@ -154,8 +165,11 @@ public class ContigsManager {
 											edgeNamesPlusPlus.put(edgeName, thisEdge);
 										}
 										if (edgeWeightPlusPlus.containsKey(edgeName))
-											edgeWeightPlusPlus.put(edgeName, edgeWeightPlusPlus.get(edgeName) + 1);
-										else edgeWeightPlusPlus.put(edgeName, new Double(1.0));
+											edgeWeightPlusPlus.put(edgeName, edgeWeightPlusPlus.get(edgeName) + weight);
+										else edgeWeightPlusPlus.put(edgeName, weight);
+										if (edgeCountPlusPlus.containsKey(edgeName))
+											edgeCountPlusPlus.put(edgeName, edgeCountPlusPlus.get(edgeName) + 1);
+										else edgeCountPlusPlus.put(edgeName, (long) 1);
 									}
 									else if (read1Orientation && ! read2Orientation) {
 										if (edgeNamesPlusMinus.containsKey(edgeName))
@@ -165,8 +179,11 @@ public class ContigsManager {
 											edgeNamesPlusMinus.put(edgeName, thisEdge);
 										}
 										if (edgeWeightPlusMinus.containsKey(edgeName))
-											edgeWeightPlusMinus.put(edgeName, edgeWeightPlusMinus.get(edgeName) + 1);
-										else edgeWeightPlusMinus.put(edgeName, new Double(1.0));
+											edgeWeightPlusMinus.put(edgeName, edgeWeightPlusMinus.get(edgeName) + weight);
+										else edgeWeightPlusMinus.put(edgeName, weight);
+										if (edgeCountPlusMinus.containsKey(edgeName))
+											edgeCountPlusMinus.put(edgeName, edgeCountPlusMinus.get(edgeName) + 1);
+										else edgeCountPlusMinus.put(edgeName, (long) 1);
 									}
 									else if (! read1Orientation && read2Orientation) {
 										if (edgeNamesMinusPlus.containsKey(edgeName))
@@ -176,8 +193,11 @@ public class ContigsManager {
 											edgeNamesMinusPlus.put(edgeName, thisEdge);
 										}
 										if (edgeWeightMinusPlus.containsKey(edgeName))
-											edgeWeightMinusPlus.put(edgeName, edgeWeightMinusPlus.get(edgeName) + 1);
-										else edgeWeightMinusPlus.put(edgeName, new Double(1.0));
+											edgeWeightMinusPlus.put(edgeName, edgeWeightMinusPlus.get(edgeName) + weight);
+										else edgeWeightMinusPlus.put(edgeName, weight);
+										if (edgeCountMinusPlus.containsKey(edgeName))
+											edgeCountMinusPlus.put(edgeName, edgeCountMinusPlus.get(edgeName) + 1);
+										else edgeCountMinusPlus.put(edgeName, (long) 1);
 									}
 									else if (! read1Orientation && ! read2Orientation) {
 										if (edgeNamesMinusMinus.containsKey(edgeName))
@@ -187,38 +207,48 @@ public class ContigsManager {
 											edgeNamesMinusMinus.put(edgeName, thisEdge);
 										}
 										if (edgeWeightMinusMinus.containsKey(edgeName))
-											edgeWeightMinusMinus.put(edgeName, edgeWeightMinusMinus.get(edgeName) + 1);
-										else edgeWeightMinusMinus.put(edgeName, new Double(1.0));
+											edgeWeightMinusMinus.put(edgeName, edgeWeightMinusMinus.get(edgeName) + weight);
+										else edgeWeightMinusMinus.put(edgeName, weight);
+										if (edgeCountMinusMinus.containsKey(edgeName))
+											edgeCountMinusMinus.put(edgeName, edgeCountMinusMinus.get(edgeName) + 1);
+										else edgeCountMinusMinus.put(edgeName, (long) 1);
 									}
 								}
 							}
 					}
 				}
+			}
 		}
 		CyTable table = network.getDefaultEdgeTable();
 		if (table.getColumn("weight") == null)
 			table.createColumn("weight", Double.class, false);
 		if (table.getColumn("orientation") == null)
 			table.createColumn("orientation", String.class, false);
+		if (table.getColumn("reliability") == null)
+			table.createColumn("reliability", Double.class, false);
 		for (String s: edgeNamesPlusPlus.keySet()) {
 			table.getRow(edgeNamesPlusPlus.get(s).getSUID()).set(CyNetwork.NAME, s);
 			table.getRow(edgeNamesPlusPlus.get(s).getSUID()).set("weight", edgeWeightPlusPlus.get(s));
 			table.getRow(edgeNamesPlusPlus.get(s).getSUID()).set("orientation", "plusplus");
+			table.getRow(edgeNamesPlusPlus.get(s).getSUID()).set("reliability", edgeWeightPlusPlus.get(s) / edgeCountPlusPlus.get(s));
 		}
 		for (String s: edgeNamesPlusMinus.keySet()) {
 			table.getRow(edgeNamesPlusMinus.get(s).getSUID()).set(CyNetwork.NAME, s);
 			table.getRow(edgeNamesPlusMinus.get(s).getSUID()).set("weight", edgeWeightPlusMinus.get(s));
-			table.getRow(edgeNamesPlusMinus.get(s).getSUID()).set("orientation", "plusminus");			
+			table.getRow(edgeNamesPlusMinus.get(s).getSUID()).set("orientation", "plusminus");
+			table.getRow(edgeNamesPlusMinus.get(s).getSUID()).set("reliability", edgeWeightPlusMinus.get(s) / edgeCountPlusMinus.get(s));
 		}
 		for (String s: edgeNamesMinusPlus.keySet()) {
 			table.getRow(edgeNamesMinusPlus.get(s).getSUID()).set(CyNetwork.NAME, s);
 			table.getRow(edgeNamesMinusPlus.get(s).getSUID()).set("weight", edgeWeightMinusPlus.get(s));
 			table.getRow(edgeNamesMinusPlus.get(s).getSUID()).set("orientation", "minusplus");
+			table.getRow(edgeNamesMinusPlus.get(s).getSUID()).set("reliability", edgeWeightMinusPlus.get(s) / edgeCountMinusPlus.get(s));
 		}
 		for (String s: edgeNamesMinusMinus.keySet()) {
 			table.getRow(edgeNamesMinusMinus.get(s).getSUID()).set(CyNetwork.NAME, s);
 			table.getRow(edgeNamesMinusMinus.get(s).getSUID()).set("weight", edgeWeightMinusMinus.get(s));
 			table.getRow(edgeNamesMinusMinus.get(s).getSUID()).set("orientation", "minusminus");
+			table.getRow(edgeNamesMinusMinus.get(s).getSUID()).set("reliability", edgeWeightMinusMinus.get(s) / edgeCountMinusMinus.get(s));
 		}
 	}
 }
