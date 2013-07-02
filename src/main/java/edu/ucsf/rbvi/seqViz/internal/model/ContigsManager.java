@@ -302,6 +302,14 @@ public class ContigsManager {
 		if (table.getColumn("read_cov_hist_log") == null)
 			table.createListColumn("read_cov_hist_log", Double.class, false);
 		
+		if (table.getColumn("barchart_paired_end_hist") == null)
+			table.createColumn("barchart_paired_end_hist", String.class, false);
+		if (table.getColumn("barchart_paired_end_rev_hist") == null)
+			table.createColumn("barchart_paired_end_rev_hist", String.class, false);
+		if (table.getColumn("bartchart_read_cov_hist") == null)
+			table.createColumn("bartchart_read_cov_hist", String.class, false);
+
+		double paired_end_min = 0, paired_end_max = 0, read_cov_max = 0, temp;
 		for (String s: contigs.keySet()) {
 			long [] paired_end_hist = new long[(contigs.get(s).sequence().length() / binSize) + 1],
 					paired_end_hist_rev = new long[(contigs.get(s).sequence().length() / binSize) + 1],
@@ -324,30 +332,41 @@ public class ContigsManager {
 			for (int i = 0; i < paired_end_hist.length; i++) {
 				a.add(paired_end_hist[i]);
 				if (paired_end_hist[i] == 0)
-					d.add(0.0);
+					d.add(temp = 0.0);
 				else
-					d.add(Math.log(paired_end_hist[i]) + 1);
+					d.add(temp = Math.log(paired_end_hist[i]) + 1);
+				if (temp > paired_end_max)
+					paired_end_max = temp;
 			}
 			table.getRow(contigs.get(s).node.getSUID()).set("paired_end_hist", a);
 			table.getRow(contigs.get(s).node.getSUID()).set("paired_end_hist_log", d);
 			for (int i = 0; i < paired_end_hist_rev.length; i++) {
 				b.add(paired_end_hist_rev[i]);
 				if (paired_end_hist_rev[i] == 0)
-					e.add(0.0);
+					e.add(temp = 0.0);
 				else
-					e.add(- Math.log(- paired_end_hist_rev[i]) - 1);
+					e.add(temp = - Math.log(- paired_end_hist_rev[i]) - 1);
+				if (temp < paired_end_min)
+					paired_end_min = temp;
 			}
 			table.getRow(contigs.get(s).node.getSUID()).set("paired_end_hist_rev", b);
 			table.getRow(contigs.get(s).node.getSUID()).set("paired_end_hist_rev_log", e);
 			for (int i = 0; i < read_cov_hist.length; i++) {
 				c.add(read_cov_hist[i]);
 				if (read_cov_hist[i] == 0)
-					f.add(0.0);
+					f.add(temp = 0.0);
 				else
-					f.add(Math.log(read_cov_hist[i]) + 1);
+					f.add(temp = Math.log(read_cov_hist[i]) + 1);
+				if (temp > read_cov_max)
+					read_cov_max = temp;
 			}
 			table.getRow(contigs.get(s).node.getSUID()).set("read_cov_hist", c);
 			table.getRow(contigs.get(s).node.getSUID()).set("read_cov_hist_log", f);
+		}
+		for (String s: contigs.keySet()) {
+			table.getRow(contigs.get(s).node.getSUID()).set("barchart_paired_end_hist", "barchart: attributelist=\"paired_end_hist_log\" showlabels=\"false\" colorlist=\"up:blue,down:yellow,zero:black\" range=\"-10,10\"");
+			table.getRow(contigs.get(s).node.getSUID()).set("barchart_paired_end_hist", "barchart: attributelist=\"paired_end_hist_rev_log\" showlabels=\"false\" colorlist=\"up:blue,down:yellow,zero:black\" range=\"-10,10\"");
+			table.getRow(contigs.get(s).node.getSUID()).set("barchart_paired_end_hist", "barchart: attributelist=\"read_cov_hist_log\" showlabels=\"false\" colorlist=\"up:blue,down:yellow,zero:black\" range=\"-10,10\"");
 		}
 	}
 }
