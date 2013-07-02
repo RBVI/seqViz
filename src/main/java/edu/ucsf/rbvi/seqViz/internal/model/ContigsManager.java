@@ -335,7 +335,7 @@ public class ContigsManager {
 				if (paired_end_hist_rev[i] == 0)
 					e.add(0.0);
 				else
-					e.add(Math.log(paired_end_hist_rev[i]) + 1);
+					e.add(- Math.log(- paired_end_hist_rev[i]) - 1);
 			}
 			table.getRow(contigs.get(s).node.getSUID()).set("paired_end_hist_rev", b);
 			table.getRow(contigs.get(s).node.getSUID()).set("paired_end_hist_rev_log", e);
