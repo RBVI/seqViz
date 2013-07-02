@@ -36,6 +36,8 @@ public class Contig {
 	 * @param score alignment score of the read to the contig
 	 * @param locus left-most position the read maps with respect to the contig
 	 * @param strand orientation the read maps to the contig ('true' for +, 'false' for -)
+	 * @param sameContig argument indicating whether the mate-pair read is on the same contig
+	 * 			as this read.
 	 */
 	public void addRead(Read read, int score, int locus, boolean strand, boolean sameContig) {
 		reads.add(new ReadMappingInfo(read, score, locus, strand, sameContig));
@@ -49,4 +51,18 @@ public class Contig {
 	public void addReadMappingInfo(ReadMappingInfo readsInfo) {
 		reads.add(readsInfo);
 	}
+	
+	/**
+	 * List of all reads stored in the contig
+	 * 
+	 * @return
+	 */
+	List<ReadMappingInfo> allReads() {return reads;}
+	
+	/**
+	 * The nucleotide sequence of this contig.
+	 * 
+	 * @return
+	 */
+	public String sequence() {return sequence;}
 }

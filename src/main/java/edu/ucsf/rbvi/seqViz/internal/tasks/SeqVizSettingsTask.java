@@ -15,6 +15,8 @@ public class SeqVizSettingsTask extends AbstractTask {
 	
 	private static final String[] mapperChoice = {"bowtie"};
 	private ContigsManager manager;
+	@Tunable(description="Load only reads that bridge contigs")
+	public boolean loadBridgingReads;
 	@Tunable(description="Directory to put temporary results")
 	public String tempDir;
 	@Tunable(description="Directory containing mapper binaries")
@@ -25,6 +27,7 @@ public class SeqVizSettingsTask extends AbstractTask {
 	public SeqVizSettingsTask(ContigsManager manager) {
 		mapper = new ListSingleSelection<String>(mapperChoice);
 		this.manager = manager;
+		loadBridgingReads = false;
 	}
 	
 	@Override
@@ -32,12 +35,13 @@ public class SeqVizSettingsTask extends AbstractTask {
 		// TODO Auto-generated method stub
 		if (mapper.getSelectedValue().equals(mapperChoice[0])) {
 			if (!manager.isInitialized())
-				manager.initializeSettings(new SeqVizSettings(new BowtieMapReadsTask(manager), 2, mapDir, tempDir));
+				manager.initializeSettings(new SeqVizSettings(new BowtieMapReadsTask(manager), 2, mapDir, tempDir, loadBridgingReads));
 			else {
 				manager.getSettings().mapReads = new BowtieMapReadsTask(manager);
 				manager.getSettings().threads = 2;
 				manager.getSettings().mapper_dir = mapDir;
 				manager.getSettings().temp_dir = tempDir;
+				manager.getSettings().loadBridingReads = loadBridgingReads;
 			}
 		}
 	}

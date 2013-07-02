@@ -20,8 +20,6 @@ public abstract class AbstractMapReadsTask extends AbstractTask {
 	 * temporary folders to store the index, and other parameters.
 	 * 
 	 * @param contigs ContigManager that stores the mapping results.
-	 * @param mate1 Files containing paired-end or mate-pair 1.
-	 * @param mate2 Files containing paired-end or mate-pair 2.
 	 */
 	public AbstractMapReadsTask(ContigsManager contigs/*, String mate1, String mate2 */) {
 		this.contigs = contigs;

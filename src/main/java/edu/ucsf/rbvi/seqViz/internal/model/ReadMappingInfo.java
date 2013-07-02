@@ -15,6 +15,8 @@ public class ReadMappingInfo {
 	 * @param score The alignment score
 	 * @param locus The position the read maps
 	 * @param strand The orientation the read maps ('true' for +, 'false' for -)
+	 * @param sameContig An argument indicating whether the mate-pair of the read maps to the same
+	 * 			contig.
 	 */
 	public ReadMappingInfo(Read read, int score, int locus, boolean strand, boolean sameContig) {
 		this.read = read;
@@ -50,5 +52,9 @@ public class ReadMappingInfo {
 	 */
 	public boolean strand() {return strand;}
 	
+	/**
+	 * Whether the mate-pair of the read maps to the same contig
+	 * @return 'true' if on the same contig, 'false' if not
+	 */
 	public boolean sameContig() {return sameContig;}
 }

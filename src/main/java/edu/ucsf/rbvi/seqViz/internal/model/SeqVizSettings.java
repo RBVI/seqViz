@@ -17,6 +17,7 @@ public class SeqVizSettings {
 	public List<File> mate2;
 	public File contigs;
 	public File mapContigs;
+	public boolean loadBridingReads;
 	
 	/**
 	 * Creates settings for SeqViz. Settings initialize the program. 
@@ -29,16 +30,20 @@ public class SeqVizSettings {
 	 * @param mapContigs File containing the contigs the mapper will map to.
 	 * @param contigReader A class that parses a contig file and stores it in ContigsManager.
 	 */
-	public SeqVizSettings(AbstractMapReadsTask mapReads, int threads, String mapper_dir, /*String options,*/ String temp_dir/*, File contigs, File mapContigs*/) {
+	public SeqVizSettings(AbstractMapReadsTask mapReads, int threads, String mapper_dir, /*String options,*/ String temp_dir, /*, File contigs, File mapContigs*/ boolean loadBridgingReads) {
 		this.mapReads = mapReads;
 		this.threads = threads;
 	/*	this.options = options; */
 		this.mapper_dir = mapper_dir;
 		this.temp_dir = temp_dir;
+		this.loadBridingReads = loadBridgingReads;
 	/*	this.contigs = contigs;
 		this.mapContigs = mapContigs; */
 	}
 	
-	public SeqVizSettings() {threads = 2;}
+	public SeqVizSettings() {
+		threads = 2;
+		loadBridingReads = false;
+	}
 	
 }

@@ -1,6 +1,7 @@
 package edu.ucsf.rbvi.seqViz.internal.model;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
@@ -32,15 +33,31 @@ public class ContigsManager {
 		settings = new SeqVizSettings();
 	}
 	
+	/**
+	 * Initialize the settings for ContigsManager
+	 * 
+	 * @param settings A SeqVizSettings class containing the parameters necessary to run
+	 * 					ContigsManager
+	 */
 	public void initializeSettings(SeqVizSettings settings) {
 		this.settings = settings;
 	}
 	
+	/**
+	 * Check if SeqVizSettings is initialized (settings != null)
+	 * 
+	 * @return
+	 */
 	public boolean isInitialized() {
 		if (settings != null) return true;
 		else return false;
 	}
 	
+	/**
+	 * Check if SeqVizSettings contains initialized parameters for running mapper
+	 * 
+	 * @return
+	 */
 	public boolean mapperSettingsIntiialized() {
 		return settings.mapReads != null && settings.mapper_dir != null && settings.temp_dir != null && settings.threads != 0;
 	}
@@ -66,6 +83,7 @@ public class ContigsManager {
 	 * @param score alignment score of the read to the contig
 	 * @param locus left-most position the read maps with respect to the contig
 	 * @param strand orientation the read maps to the contig ('true' for +, 'false' for -)
+	 * @param sameContig boolean stating whether the mate-pair maps to the same contig
 	 * @throws Exception throws an exception if contigName matches a name of an existing contig
 	 * 					already in ContigsManager
 	 */
@@ -96,19 +114,28 @@ public class ContigsManager {
 		thisPair.addReadMappingInfo(contigName, readInfo);
 	}
 	
+	/**
+	 * Function for loading contigs into the network.
+	 */
 	public void displayContigs() {
 		network.getRow(network).set(CyNetwork.NAME, settings.contigs.getName());
+		CyTable table = network.getDefaultNodeTable();
+		if (table.getColumn("length") == null)
+			table.createColumn("length", Long.class, false);
 		for (String s: contigs.keySet()) {
 			if (contigs.get(s).node == null) {
 				CyNode node = network.addNode();
 				contigs.get(s).node = node;
 				network.getRow(node).set(CyNetwork.NAME, s);
+				network.getRow(node).set("length", (long) contigs.get(s).sequence().length());
 			}
 		}
 	}
 	
+	/**
+	 * Function for loading edges (mate-paired reads which connects contigs) into the network
+	 */
 	public void displayBridgingReads() {
-		CyTable edges = network.getDefaultEdgeTable();
 		HashMap<String, CyEdge>	edgeNamesPlusPlus = new HashMap<String, CyEdge>(),
 								edgeNamesPlusMinus = new HashMap<String, CyEdge>(),
 								edgeNamesMinusPlus = new HashMap<String, CyEdge>(),
@@ -123,9 +150,7 @@ public class ContigsManager {
 								edgeCountMinusMinus = new HashMap<String, Long>();
 		for (ReadPair p: readPairs.values()) {
 			if (p.getMate1Contigs() != null && p.getMate2Contigs() != null) {
-				int links = p.getMate1Contigs().size() > p.getMate2Contigs().size() ?
-						p.getMate1Contigs().size(): p.getMate2Contigs().size();
-				double weight = 1.0 / (double) links;
+				double weight = p.weight();
 			for (String contig1: p.getMate1Contigs())
 				for (String contig2: p.getMate2Contigs()) {
 					if (! contig1.equals(contig2)) {
@@ -249,6 +274,80 @@ public class ContigsManager {
 			table.getRow(edgeNamesMinusMinus.get(s).getSUID()).set("weight", edgeWeightMinusMinus.get(s));
 			table.getRow(edgeNamesMinusMinus.get(s).getSUID()).set("orientation", "minusminus");
 			table.getRow(edgeNamesMinusMinus.get(s).getSUID()).set("reliability", edgeWeightMinusMinus.get(s) / edgeCountMinusMinus.get(s));
+		}
+		// Calculate log of weight
+		if (table.getColumn("weight_log") == null)
+			table.createColumn("weight_log", Double.class, false);
+		for (Long cyId: table.getPrimaryKey().getValues(Long.class))
+			table.getRow(cyId).set("weight_log", Math.log(table.getRow(cyId).get("weight", Double.class)));
+	}
+	
+	/**
+	 * Function for creating histogram from mapped reads
+	 * @param binSize size of the bins for the histogram
+	 */
+	public void createHist(int binSize) {
+		CyTable table = network.getDefaultNodeTable();
+		if (table.getColumn("paired_end_hist") == null)
+			table.createListColumn("paired_end_hist", Long.class, false);
+		if (table.getColumn("paired_end_hist_rev") == null)
+			table.createListColumn("paired_end_hist_rev", Long.class, false);
+		if (table.getColumn("read_cov_hist") == null)
+			table.createListColumn("read_cov_hist", Long.class, false);
+		
+		if (table.getColumn("paired_end_hist_log") == null)
+			table.createListColumn("paired_end_hist_log", Double.class, false);
+		if (table.getColumn("paired_end_hist_rev_log") == null)
+			table.createListColumn("paired_end_hist_rev_log", Double.class, false);
+		if (table.getColumn("read_cov_hist_log") == null)
+			table.createListColumn("read_cov_hist_log", Double.class, false);
+		
+		for (String s: contigs.keySet()) {
+			long [] paired_end_hist = new long[(contigs.get(s).sequence().length() / binSize) + 1],
+					paired_end_hist_rev = new long[(contigs.get(s).sequence().length() / binSize) + 1],
+					read_cov_hist = new long[(contigs.get(s).sequence().length() / binSize) + 1];
+			for (ReadMappingInfo readInfo: contigs.get(s).allReads()) {
+				read_cov_hist[readInfo.locus() / binSize] += 1;
+				if (! readInfo.sameContig()) {
+					if (readInfo.strand())
+						paired_end_hist[readInfo.locus() / binSize] += 1;
+					else
+						paired_end_hist_rev[readInfo.locus() / binSize] -= 1;
+				}
+			}
+			ArrayList<Long> a = new ArrayList<Long>(),
+							b = new ArrayList<Long>(),
+							c = new ArrayList<Long>();
+			ArrayList<Double>	d = new ArrayList<Double>(),
+								e = new ArrayList<Double>(),
+								f = new ArrayList<Double>();
+			for (int i = 0; i < paired_end_hist.length; i++) {
+				a.add(paired_end_hist[i]);
+				if (paired_end_hist[i] == 0)
+					d.add(0.0);
+				else
+					d.add(Math.log(paired_end_hist[i]) + 1);
+			}
+			table.getRow(contigs.get(s).node.getSUID()).set("paired_end_hist", a);
+			table.getRow(contigs.get(s).node.getSUID()).set("paired_end_hist_log", d);
+			for (int i = 0; i < paired_end_hist_rev.length; i++) {
+				b.add(paired_end_hist_rev[i]);
+				if (paired_end_hist_rev[i] == 0)
+					e.add(0.0);
+				else
+					e.add(Math.log(paired_end_hist_rev[i]) + 1);
+			}
+			table.getRow(contigs.get(s).node.getSUID()).set("paired_end_hist_rev", b);
+			table.getRow(contigs.get(s).node.getSUID()).set("paired_end_hist_rev_log", e);
+			for (int i = 0; i < read_cov_hist.length; i++) {
+				c.add(read_cov_hist[i]);
+				if (read_cov_hist[i] == 0)
+					f.add(0.0);
+				else
+					f.add(Math.log(read_cov_hist[i]) + 1);
+			}
+			table.getRow(contigs.get(s).node.getSUID()).set("read_cov_hist", c);
+			table.getRow(contigs.get(s).node.getSUID()).set("read_cov_hist_log", f);
 		}
 	}
 }

@@ -52,7 +52,7 @@ public class SAMReader extends AbstractMapOutputReader {
 					read1 = null;
 					read2 = null;
 				}
-				if (aligned) {
+				if (aligned && ! (sameContig && contigs.getSettings().loadBridingReads)) {
 					if (contigs == null) throw new Exception("ContigManager not initialized.");
 					if (mate1) {
 						if (read1 == null)
@@ -70,7 +70,6 @@ public class SAMReader extends AbstractMapOutputReader {
 				prevReadName = readName;
 			}
 		}
-		contigs.displayBridgingReads();
 	}
 
 }

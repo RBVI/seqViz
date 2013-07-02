@@ -25,7 +25,6 @@ public abstract class AbstractMapOutputReader {
 	 * a ContigManager.
 	 * 
 	 * @param stream Output of the mapper, in the form of an InputStream 
-	 * @param contigs A ContigsManager to store the data obtained from InputStream stream
 	 * @param arg0 helps report to the user the progress of mapping
 	 * @param reads expected number of reads to be mapped
 	 * @throws Exception Throws exception if the contigs do not exist in ContigsManager, or
