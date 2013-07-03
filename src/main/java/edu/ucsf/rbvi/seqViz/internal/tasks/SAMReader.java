@@ -20,6 +20,8 @@ public class SAMReader extends AbstractMapOutputReader {
 	}
 
 	public void readReads(InputStream stream, TaskMonitor monitor, int reads) throws Exception {
+		monitor.setTitle("Map reads to contigs");
+		monitor.setStatusMessage("Mapping reads...");
 		BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
 		if (contigs == null) throw new Exception("The scaffold has not been created.");
 		String line, readName = null, prevReadName = null;

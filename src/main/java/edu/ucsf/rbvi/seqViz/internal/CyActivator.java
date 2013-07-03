@@ -64,7 +64,7 @@ public class CyActivator extends AbstractCyActivator {
 		}
 		
 		// Create new network and network view
-		CyNetworkFactory networkFactory = getService(bc, CyNetworkFactory.class);
+	/*	CyNetworkFactory networkFactory = getService(bc, CyNetworkFactory.class);
 		CyNetwork network = networkFactory.createNetwork();
 		network.getRow(network).set(CyNetwork.NAME, "");
 		
@@ -74,10 +74,10 @@ public class CyActivator extends AbstractCyActivator {
 		CyNetworkViewFactory networkViewFactory = getService(bc, CyNetworkViewFactory.class);
 		CyNetworkView myView = networkViewFactory.createNetworkView(network);
 		CyNetworkViewManager networkViewManager = getService(bc, CyNetworkViewManager.class);
-		networkViewManager.addNetworkView(myView);
+		networkViewManager.addNetworkView(myView); */
 		
 		// Create the context object
-		ContigsManager seqManager = new ContigsManager(network);
+		ContigsManager seqManager = new ContigsManager(bc);
 
 		// Get a handle on the CyServiceRegistrar
 		CyServiceRegistrar registrar = getService(bc, CyServiceRegistrar.class);
@@ -88,19 +88,16 @@ public class CyActivator extends AbstractCyActivator {
 		
 		// Load new Visual Style for seqViz
 		VisualMappingManager vmmServiceRef = getService(bc,VisualMappingManager.class);
-		VisualStyleFactory visualStyleFactoryServiceRef = getService(bc,VisualStyleFactory.class);
 		InputStream stream = CyActivator.class.getResourceAsStream("/seqVizStyle.xml");
+		VisualStyle style = null;
 		if (stream != null) {
 				LoadVizmapFileTaskFactory loadVizmapFileTaskFactory =  getService(bc,LoadVizmapFileTaskFactory.class);
 				Set<VisualStyle> vsSet = loadVizmapFileTaskFactory.loadStyles(stream);
-				VisualStyle style = null;
 				if (vsSet != null)
 					for (VisualStyle vs: vsSet) {
 						vmmServiceRef.addVisualStyle(vs);
 						style = vs;
 					}
-				style.apply(myView);
-				myView.updateView();
 		}
 		
 		SeqVizSettingsTaskFactory settingsTask = new SeqVizSettingsTaskFactory(

@@ -23,6 +23,8 @@ public class ReadFASTAContigsTask extends AbstractReadContigsTask {
 	@Override
 	public void run(TaskMonitor arg0) throws Exception {
 		// TODO Auto-generated method stub
+		arg0.setTitle("Loading contigs");
+		arg0.setStatusMessage("Loading contigs...");
 		BufferedReader reader = new BufferedReader(new FileReader(contigsFile));
 		manager.getSettings().contigs = contigsFile;
 		String line, header = null;

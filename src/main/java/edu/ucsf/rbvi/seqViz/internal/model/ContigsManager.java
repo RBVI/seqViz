@@ -1,15 +1,29 @@
 package edu.ucsf.rbvi.seqViz.internal.model;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import org.cytoscape.model.CyEdge;
 import org.cytoscape.model.CyNetwork;
+import org.cytoscape.model.CyNetworkFactory;
+import org.cytoscape.model.CyNetworkManager;
 import org.cytoscape.model.CyNode;
 import org.cytoscape.model.CyTable;
+import org.cytoscape.task.read.LoadVizmapFileTaskFactory;
+import org.cytoscape.view.model.CyNetworkView;
+import org.cytoscape.view.model.CyNetworkViewFactory;
+import org.cytoscape.view.model.CyNetworkViewManager;
+import org.cytoscape.view.vizmap.VisualMappingManager;
+import org.cytoscape.view.vizmap.VisualStyle;
+import org.cytoscape.view.vizmap.VisualStyleFactory;
 import org.cytoscape.work.TaskMonitor;
+import org.osgi.framework.BundleContext;
+
+import edu.ucsf.rbvi.seqViz.internal.CyActivator;
 
 /**
  * ContigsManager is a container for Contig(s), and some other information that allows construction
@@ -25,11 +39,14 @@ public class ContigsManager {
 	private HashMap<String,Contig> contigs;
 	private SeqVizSettings settings;
 	private CyNetwork network;
+	private BundleContext bundleContext;
 	
-	public ContigsManager(CyNetwork network) {
+	public ContigsManager(BundleContext bc) {
 		contigs = new HashMap<String, Contig>();
 		readPairs = new HashMap<String, ReadPair>();
-		this.network = network;
+		bundleContext = bc;
+		CyNetworkFactory networkFactory = (CyNetworkFactory) getService(CyNetworkFactory.class);
+		this.network = networkFactory.createNetwork();
 		settings = new SeqVizSettings();
 	}
 	
@@ -368,5 +385,36 @@ public class ContigsManager {
 			table.getRow(contigs.get(s).node.getSUID()).set("barchart_paired_end_rev_hist", "barchart: attributelist=\"paired_end_hist_rev_log\" showlabels=\"false\" colorlist=\"up:blue,down:yellow,zero:black\" range=\"" + paired_end_min + "," + paired_end_max + "\"");
 			table.getRow(contigs.get(s).node.getSUID()).set("bartchart_read_cov_hist", "barchart: attributelist=\"read_cov_hist_log\" showlabels=\"false\" colorlist=\"up:blue,down:yellow,zero:black\" range=\"0," + read_cov_max + "\"");
 		}
+	}
+	
+	public void displayNetwork() {
+		CyNetworkManager networkManager = (CyNetworkManager) getService(CyNetworkManager.class);
+		networkManager.addNetwork(network);
+		
+		CyNetworkViewFactory networkViewFactory = (CyNetworkViewFactory) getService(CyNetworkViewFactory.class);
+		CyNetworkView myView = networkViewFactory.createNetworkView(network);
+		CyNetworkViewManager networkViewManager = (CyNetworkViewManager) getService(CyNetworkViewManager.class);
+		networkViewManager.addNetworkView(myView);
+		
+	//	VisualMappingManager vmmServiceRef = (VisualMappingManager) getService(VisualMappingManager.class);
+	//	VisualStyleFactory visualStyleFactoryServiceRef = (VisualStyleFactory) getService(VisualStyleFactory.class);
+		InputStream stream = CyActivator.class.getResourceAsStream("/seqVizStyle.xml");
+		VisualStyle style = null;
+		if (stream != null) {
+				LoadVizmapFileTaskFactory loadVizmapFileTaskFactory =  (LoadVizmapFileTaskFactory) getService(LoadVizmapFileTaskFactory.class);
+				Set<VisualStyle> vsSet = loadVizmapFileTaskFactory.loadStyles(stream);
+				if (vsSet != null)
+					for (VisualStyle vs: vsSet) {
+					//	vmmServiceRef.addVisualStyle(vs);
+						style = vs;
+					}
+		}
+		if (style != null)
+			style.apply(myView);
+		myView.updateView();
+	}
+	
+	private Object getService(Class<?> serviceClass) {
+		return bundleContext.getService(bundleContext.getServiceReference(serviceClass.getName()));
 	}
 }
