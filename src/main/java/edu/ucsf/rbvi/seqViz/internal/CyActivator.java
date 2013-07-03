@@ -90,14 +90,9 @@ public class CyActivator extends AbstractCyActivator {
 		VisualMappingManager vmmServiceRef = getService(bc,VisualMappingManager.class);
 		VisualStyleFactory visualStyleFactoryServiceRef = getService(bc,VisualStyleFactory.class);
 		InputStream stream = CyActivator.class.getResourceAsStream("/seqVizStyle.xml");
-	//	System.out.println("Got URL");
 		if (stream != null) {
-		//	try {
-	//			File f = new File();
-	//			System.out.println("Converted to file" + myUrl.getPath() + myUrl.getFile());
 				LoadVizmapFileTaskFactory loadVizmapFileTaskFactory =  getService(bc,LoadVizmapFileTaskFactory.class);
 				Set<VisualStyle> vsSet = loadVizmapFileTaskFactory.loadStyles(stream);
-	//			System.out.println("Loaded visual style");
 				VisualStyle style = null;
 				if (vsSet != null)
 					for (VisualStyle vs: vsSet) {
@@ -106,10 +101,6 @@ public class CyActivator extends AbstractCyActivator {
 					}
 				style.apply(myView);
 				myView.updateView();
-		//	} catch (URISyntaxException e) {
-		//		// TODO Auto-generated catch block
-		//		e.printStackTrace();
-		//	}
 		}
 		
 		SeqVizSettingsTaskFactory settingsTask = new SeqVizSettingsTaskFactory(
