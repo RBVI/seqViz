@@ -26,6 +26,11 @@ public class BowtieMapReadsTask extends AbstractMapReadsTask {
 		// TODO Auto-generated method stub
 		if (contigs.getSettings().mate1 != null && !contigs.getSettings().mate1.isEmpty());
 		if (contigs.getSettings().mate2 != null && !contigs.getSettings().mate2.isEmpty());
+		
+		ReadFASTAContigsTask contigReader = new ReadFASTAContigsTask(contigs);
+		contigReader.contigsFile = contigsFile;
+		contigReader.run(arg0);
+		
 		Process index = Runtime.getRuntime().exec(contigs.getSettings().mapper_dir + "bowtie2-build -f " + contigsFile.getAbsolutePath() + " " + contigs.getSettings().temp_dir + contigsFile.getName());
 		index.waitFor();
 		Process p = Runtime.getRuntime().exec(contigs.getSettings().mapper_dir + "bowtie2 -q --end-to-end --fast -p " + contigs.getSettings().threads + " --phred64 -a -x " + contigs.getSettings().temp_dir + contigsFile.getName() + " -1 " + mate1.getAbsolutePath() + " -2 " + mate2.getAbsolutePath());

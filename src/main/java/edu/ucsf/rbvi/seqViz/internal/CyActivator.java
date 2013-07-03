@@ -9,7 +9,14 @@ import static org.cytoscape.work.ServiceProperties.MENU_GRAVITY;
 import static org.cytoscape.work.ServiceProperties.PREFERRED_MENU;
 import static org.cytoscape.work.ServiceProperties.TITLE;
 
+import java.io.File;
+import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Properties;
+import java.util.Set;
+
+import javax.swing.ImageIcon;
 
 import org.cytoscape.application.swing.CySwingApplication;
 import org.cytoscape.model.CyNetwork;
@@ -17,6 +24,13 @@ import org.cytoscape.model.CyNetworkFactory;
 import org.cytoscape.model.CyNetworkManager;
 import org.cytoscape.service.util.AbstractCyActivator;
 import org.cytoscape.service.util.CyServiceRegistrar;
+import org.cytoscape.task.read.LoadVizmapFileTaskFactory;
+import org.cytoscape.view.model.CyNetworkView;
+import org.cytoscape.view.model.CyNetworkViewFactory;
+import org.cytoscape.view.model.CyNetworkViewManager;
+import org.cytoscape.view.vizmap.VisualMappingManager;
+import org.cytoscape.view.vizmap.VisualStyle;
+import org.cytoscape.view.vizmap.VisualStyleFactory;
 import org.cytoscape.work.TaskFactory;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
@@ -49,12 +63,18 @@ public class CyActivator extends AbstractCyActivator {
 			// Issue error and return
 		}
 		
+		// Create new network and network view
 		CyNetworkFactory networkFactory = getService(bc, CyNetworkFactory.class);
 		CyNetwork network = networkFactory.createNetwork();
 		network.getRow(network).set(CyNetwork.NAME, "");
 		
 		CyNetworkManager networkManager = getService(bc, CyNetworkManager.class);
 		networkManager.addNetwork(network);
+		
+		CyNetworkViewFactory networkViewFactory = getService(bc, CyNetworkViewFactory.class);
+		CyNetworkView myView = networkViewFactory.createNetworkView(network);
+		CyNetworkViewManager networkViewManager = getService(bc, CyNetworkViewManager.class);
+		networkViewManager.addNetworkView(myView);
 		
 		// Create the context object
 		ContigsManager seqManager = new ContigsManager(network);
@@ -65,7 +85,33 @@ public class CyActivator extends AbstractCyActivator {
 		// Create and register our listeners
 	
 		// Menu task factories
-
+		
+		// Load new Visual Style for seqViz
+		VisualMappingManager vmmServiceRef = getService(bc,VisualMappingManager.class);
+		VisualStyleFactory visualStyleFactoryServiceRef = getService(bc,VisualStyleFactory.class);
+		InputStream stream = CyActivator.class.getResourceAsStream("/seqVizStyle.xml");
+	//	System.out.println("Got URL");
+		if (stream != null) {
+		//	try {
+	//			File f = new File();
+	//			System.out.println("Converted to file" + myUrl.getPath() + myUrl.getFile());
+				LoadVizmapFileTaskFactory loadVizmapFileTaskFactory =  getService(bc,LoadVizmapFileTaskFactory.class);
+				Set<VisualStyle> vsSet = loadVizmapFileTaskFactory.loadStyles(stream);
+	//			System.out.println("Loaded visual style");
+				VisualStyle style = null;
+				if (vsSet != null)
+					for (VisualStyle vs: vsSet) {
+						vmmServiceRef.addVisualStyle(vs);
+						style = vs;
+					}
+				style.apply(myView);
+				myView.updateView();
+		//	} catch (URISyntaxException e) {
+		//		// TODO Auto-generated catch block
+		//		e.printStackTrace();
+		//	}
+		}
+		
 		SeqVizSettingsTaskFactory settingsTask = new SeqVizSettingsTaskFactory(
 				seqManager);
 		Properties settingsProps = new Properties();
@@ -79,7 +125,7 @@ public class CyActivator extends AbstractCyActivator {
 		settingsProps.setProperty(MENU_GRAVITY, "10.0");
 		registerService(bc, settingsTask, TaskFactory.class, settingsProps);
 
-		ReadFASTAContigsTaskFactory readFASTAContigsTask = new ReadFASTAContigsTaskFactory(seqManager);
+	/*	ReadFASTAContigsTaskFactory readFASTAContigsTask = new ReadFASTAContigsTaskFactory(seqManager);
 		Properties readFASTAProps = new Properties();
 		readFASTAProps.setProperty(PREFERRED_MENU, "Apps.SeqViz.Load contigs file");
 		readFASTAProps.setProperty(TITLE, "FASTA");
@@ -89,7 +135,7 @@ public class CyActivator extends AbstractCyActivator {
 		// settingsProps.setProperty(ENABLE_FOR, "network");
 		// readFASTAProps.setProperty(INSERT_SEPARATOR_BEFORE, "true");
 		readFASTAProps.setProperty(MENU_GRAVITY, "9.0");
-		registerService(bc, readFASTAContigsTask, TaskFactory.class, readFASTAProps);
+		registerService(bc, readFASTAContigsTask, TaskFactory.class, readFASTAProps); */
 		
 		MapReadsTaskFactory mapReadsTask = new MapReadsTaskFactory(seqManager);
 		Properties mapReadsProps = new Properties();
