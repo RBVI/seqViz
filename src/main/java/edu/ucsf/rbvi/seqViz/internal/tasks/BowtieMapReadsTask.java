@@ -1,6 +1,8 @@
 package edu.ucsf.rbvi.seqViz.internal.tasks;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 
 import org.cytoscape.work.TaskMonitor;
 import org.cytoscape.work.Tunable;
@@ -31,11 +33,22 @@ public class BowtieMapReadsTask extends AbstractMapReadsTask {
 		contigReader.contigsFile = contigsFile;
 		contigReader.run(arg0);
 		
+		BufferedReader mate1Reads = new BufferedReader(new FileReader(mate1));
+		String line;
+		long sample = 10000, sampleSize = 0;
+		for (int i = 0; i < sample; i++) {
+			line = mate1Reads.readLine();
+			sampleSize += line.length();
+		}
+		mate1Reads.close();
+		long readEstimate = mate1.length() * (sample / 4) / sampleSize;
+		
 		Process index = Runtime.getRuntime().exec(contigs.getSettings().mapper_dir + "bowtie2-build -f " + contigsFile.getAbsolutePath() + " " + contigs.getSettings().temp_dir + contigsFile.getName());
 		index.waitFor();
 		Process p = Runtime.getRuntime().exec(contigs.getSettings().mapper_dir + "bowtie2 -q --end-to-end --fast -p " + contigs.getSettings().threads + " --phred64 -a -x " + contigs.getSettings().temp_dir + contigsFile.getName() + " -1 " + mate1.getAbsolutePath() + " -2 " + mate2.getAbsolutePath());
 		AbstractMapOutputReader reader = new SAMReader(contigs);
-		reader.readReads(p.getInputStream(), arg0, 0);
+		reader.readReads(p.getInputStream(), arg0, readEstimate);
+		
 		contigs.displayBridgingReads();
 		contigs.createHist(200);
 		contigs.displayNetwork();

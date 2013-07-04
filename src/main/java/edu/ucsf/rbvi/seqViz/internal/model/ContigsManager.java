@@ -40,11 +40,13 @@ public class ContigsManager {
 	private SeqVizSettings settings;
 	private CyNetwork network;
 	private BundleContext bundleContext;
+	private VisualStyle vs;
 	
-	public ContigsManager(BundleContext bc) {
+	public ContigsManager(BundleContext bc, VisualStyle vs) {
 		contigs = new HashMap<String, Contig>();
 		readPairs = new HashMap<String, ReadPair>();
 		bundleContext = bc;
+		this.vs = vs;
 		CyNetworkFactory networkFactory = (CyNetworkFactory) getService(CyNetworkFactory.class);
 		this.network = networkFactory.createNetwork();
 		settings = new SeqVizSettings();
@@ -306,11 +308,11 @@ public class ContigsManager {
 	public void createHist(int binSize) {
 		CyTable table = network.getDefaultNodeTable();
 		if (table.getColumn("paired_end_hist") == null)
-			table.createListColumn("paired_end_hist", Long.class, false);
+			table.createListColumn("paired_end_hist", Double.class, false);
 		if (table.getColumn("paired_end_hist_rev") == null)
-			table.createListColumn("paired_end_hist_rev", Long.class, false);
+			table.createListColumn("paired_end_hist_rev", Double.class, false);
 		if (table.getColumn("read_cov_hist") == null)
-			table.createListColumn("read_cov_hist", Long.class, false);
+			table.createListColumn("read_cov_hist", Double.class, false);
 		
 		if (table.getColumn("paired_end_hist_log") == null)
 			table.createListColumn("paired_end_hist_log", Double.class, false);
@@ -328,30 +330,31 @@ public class ContigsManager {
 
 		double paired_end_min = 0, paired_end_max = 0, read_cov_max = 0, temp;
 		for (String s: contigs.keySet()) {
-			long [] paired_end_hist = new long[(contigs.get(s).sequence().length() / binSize) + 1],
-					paired_end_hist_rev = new long[(contigs.get(s).sequence().length() / binSize) + 1],
-					read_cov_hist = new long[(contigs.get(s).sequence().length() / binSize) + 1];
+			double [] paired_end_hist = new double[(contigs.get(s).sequence().length() / binSize) + 1],
+					paired_end_hist_rev = new double[(contigs.get(s).sequence().length() / binSize) + 1],
+					read_cov_hist = new double[(contigs.get(s).sequence().length() / binSize) + 1];
 			for (ReadMappingInfo readInfo: contigs.get(s).allReads()) {
-				read_cov_hist[readInfo.locus() / binSize] += 1;
+				read_cov_hist[readInfo.locus() / binSize] += (double) readInfo.read().length() / (double) binSize;
 				if (! readInfo.sameContig()) {
 					if (readInfo.strand())
-						paired_end_hist[readInfo.locus() / binSize] += 1;
+						paired_end_hist[readInfo.locus() / binSize] += (double) readInfo.read().length() / (double) binSize;
 					else
-						paired_end_hist_rev[readInfo.locus() / binSize] -= 1;
+						paired_end_hist_rev[readInfo.locus() / binSize] -= (double) readInfo.read().length() / (double) binSize;
 				}
 			}
-			ArrayList<Long> a = new ArrayList<Long>(),
-							b = new ArrayList<Long>(),
-							c = new ArrayList<Long>();
-			ArrayList<Double>	d = new ArrayList<Double>(),
+			ArrayList<Double>	a = new ArrayList<Double>(),
+								b = new ArrayList<Double>(),
+								c = new ArrayList<Double>(),
+								d = new ArrayList<Double>(),
 								e = new ArrayList<Double>(),
 								f = new ArrayList<Double>();
 			for (int i = 0; i < paired_end_hist.length; i++) {
 				a.add(paired_end_hist[i]);
-				if (paired_end_hist[i] == 0)
+			/*	if (paired_end_hist[i] == 0)
 					d.add(temp = 0.0);
 				else
-					d.add(temp = Math.log(paired_end_hist[i]) + 1);
+					d.add(temp = Math.log(paired_end_hist[i]) + 1); */
+				d.add(temp = Math.log(paired_end_hist[i] + 1));
 				if (temp > paired_end_max)
 					paired_end_max = temp;
 			}
@@ -359,10 +362,11 @@ public class ContigsManager {
 			table.getRow(contigs.get(s).node.getSUID()).set("paired_end_hist_log", d);
 			for (int i = 0; i < paired_end_hist_rev.length; i++) {
 				b.add(paired_end_hist_rev[i]);
-				if (paired_end_hist_rev[i] == 0)
+			/*	if (paired_end_hist_rev[i] == 0)
 					e.add(temp = 0.0);
 				else
-					e.add(temp = - Math.log(- paired_end_hist_rev[i]) - 1);
+					e.add(temp = - Math.log(- paired_end_hist_rev[i]) - 1); */
+				e.add(temp = - Math.log(- paired_end_hist_rev[i] + 1));
 				if (temp < paired_end_min)
 					paired_end_min = temp;
 			}
@@ -370,10 +374,11 @@ public class ContigsManager {
 			table.getRow(contigs.get(s).node.getSUID()).set("paired_end_hist_rev_log", e);
 			for (int i = 0; i < read_cov_hist.length; i++) {
 				c.add(read_cov_hist[i]);
-				if (read_cov_hist[i] == 0)
+			/*	if (read_cov_hist[i] == 0)
 					f.add(temp = 0.0);
 				else
-					f.add(temp = Math.log(read_cov_hist[i]) + 1);
+					f.add(temp = Math.log(read_cov_hist[i]) + 1); */
+				f.add(temp = Math.log(read_cov_hist[i] + 1));
 				if (temp > read_cov_max)
 					read_cov_max = temp;
 			}
@@ -398,7 +403,7 @@ public class ContigsManager {
 		
 	//	VisualMappingManager vmmServiceRef = (VisualMappingManager) getService(VisualMappingManager.class);
 	//	VisualStyleFactory visualStyleFactoryServiceRef = (VisualStyleFactory) getService(VisualStyleFactory.class);
-		InputStream stream = CyActivator.class.getResourceAsStream("/seqVizStyle.xml");
+	/*	InputStream stream = CyActivator.class.getResourceAsStream("/seqVizStyle.xml");
 		VisualStyle style = null;
 		if (stream != null) {
 				LoadVizmapFileTaskFactory loadVizmapFileTaskFactory =  (LoadVizmapFileTaskFactory) getService(LoadVizmapFileTaskFactory.class);
@@ -408,9 +413,9 @@ public class ContigsManager {
 					//	vmmServiceRef.addVisualStyle(vs);
 						style = vs;
 					}
-		}
-		if (style != null)
-			style.apply(myView);
+		} */
+		if (vs != null)
+			vs.apply(myView);
 		myView.updateView();
 	}
 	

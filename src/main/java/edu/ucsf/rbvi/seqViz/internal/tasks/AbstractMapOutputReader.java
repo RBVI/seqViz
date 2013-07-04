@@ -30,5 +30,5 @@ public abstract class AbstractMapOutputReader {
 	 * @throws Exception Throws exception if the contigs do not exist in ContigsManager, or
 	 * 							an error reading stream.
 	 */
-	public abstract void readReads(InputStream stream, TaskMonitor arg0, int reads) throws Exception;
+	public abstract void readReads(InputStream stream, TaskMonitor arg0, long reads) throws Exception;
 }

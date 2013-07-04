@@ -76,16 +76,6 @@ public class CyActivator extends AbstractCyActivator {
 		CyNetworkViewManager networkViewManager = getService(bc, CyNetworkViewManager.class);
 		networkViewManager.addNetworkView(myView); */
 		
-		// Create the context object
-		ContigsManager seqManager = new ContigsManager(bc);
-
-		// Get a handle on the CyServiceRegistrar
-		CyServiceRegistrar registrar = getService(bc, CyServiceRegistrar.class);
-
-		// Create and register our listeners
-	
-		// Menu task factories
-		
 		// Load new Visual Style for seqViz
 		VisualMappingManager vmmServiceRef = getService(bc,VisualMappingManager.class);
 		InputStream stream = CyActivator.class.getResourceAsStream("/seqVizStyle.xml");
@@ -99,6 +89,16 @@ public class CyActivator extends AbstractCyActivator {
 						style = vs;
 					}
 		}
+		
+		// Create the context object
+		ContigsManager seqManager = new ContigsManager(bc, style);
+
+		// Get a handle on the CyServiceRegistrar
+		CyServiceRegistrar registrar = getService(bc, CyServiceRegistrar.class);
+
+		// Create and register our listeners
+	
+		// Menu task factories
 		
 		SeqVizSettingsTaskFactory settingsTask = new SeqVizSettingsTaskFactory(
 				seqManager);

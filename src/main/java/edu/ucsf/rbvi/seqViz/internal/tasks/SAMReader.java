@@ -19,18 +19,21 @@ public class SAMReader extends AbstractMapOutputReader {
 		// TODO Auto-generated constructor stub
 	}
 
-	public void readReads(InputStream stream, TaskMonitor monitor, int reads) throws Exception {
+	public void readReads(InputStream stream, TaskMonitor monitor, long reads) throws Exception {
 		monitor.setTitle("Map reads to contigs");
 		monitor.setStatusMessage("Mapping reads...");
 		BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
 		if (contigs == null) throw new Exception("The scaffold has not been created.");
 		String line, readName = null, prevReadName = null;
+		long counter = 0;
 		while ((line = reader.readLine()) != null) {
 			String[] fields = line.split("\t");
 			Read read1 = null, read2 = null;
 			if (fields.length >= 11) {
-				if (! fields[0].equals(readName))
+				if (! fields[0].equals(readName)) {
 					readName = fields[0];
+					counter++;
+				}
 				int flags = Integer.parseInt(fields[1]);
 				boolean matePair = (flags & 1) == 0 ? false: true,
 						aligned = (flags & 4) == 0 ? true: false,
@@ -71,6 +74,8 @@ public class SAMReader extends AbstractMapOutputReader {
 				}
 				prevReadName = readName;
 			}
+			if (counter % 10000 == 1)
+				monitor.setProgress((double) counter / (double) reads);
 		}
 	}
 
