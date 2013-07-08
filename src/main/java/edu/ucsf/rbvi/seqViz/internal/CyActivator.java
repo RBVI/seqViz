@@ -93,6 +93,7 @@ public class CyActivator extends AbstractCyActivator {
 					for (VisualStyle vs: vsSet) {
 						vmmServiceRef.addVisualStyle(vs);
 						style = vs;
+						vs.setTitle(vs.getTitle().split("_")[0]);
 						styles.put(vs.getTitle(), vs);
 					}
 		}
