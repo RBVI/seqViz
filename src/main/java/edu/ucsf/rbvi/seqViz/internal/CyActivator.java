@@ -26,6 +26,8 @@ import org.cytoscape.model.CyNetworkFactory;
 import org.cytoscape.model.CyNetworkManager;
 import org.cytoscape.service.util.AbstractCyActivator;
 import org.cytoscape.service.util.CyServiceRegistrar;
+import org.cytoscape.task.AbstractNetworkViewTaskFactory;
+import org.cytoscape.task.NetworkViewTaskFactory;
 import org.cytoscape.task.read.LoadVizmapFileTaskFactory;
 import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.CyNetworkViewFactory;
@@ -107,10 +109,9 @@ public class CyActivator extends AbstractCyActivator {
 
 		// Create and register our listeners
 	
-		// Menu task factories
 		// Load visual styles
 		for (String styleName: styles.keySet()) {
-			ChangeStyleTaskFactory changeStyle = new ChangeStyleTaskFactory(seqManager, styles.get(styleName));
+			ChangeStyleTaskFactory changeStyle = new ChangeStyleTaskFactory(/* seqManager, */ styles.get(styleName));
 			Properties changeStyleProps = new Properties();
 			changeStyleProps.setProperty(PREFERRED_MENU, "Apps.SeqViz.Show Histograms");
 			changeStyleProps.setProperty(TITLE, styleName);
@@ -119,12 +120,13 @@ public class CyActivator extends AbstractCyActivator {
 			changeStyleProps.setProperty(COMMAND, command);
 			changeStyleProps.setProperty(COMMAND_NAMESPACE, "seqViz");
 			changeStyleProps.setProperty(IN_MENU_BAR, "true");
-			// settingsProps.setProperty(ENABLE_FOR, "network");
+			// changeStyleProps.setProperty(ENABLE_FOR, "network");
 			// mapReadsProps.setProperty(INSERT_SEPARATOR_BEFORE, "true");
 			changeStyleProps.setProperty(MENU_GRAVITY, "1.0");
-			registerService(bc, changeStyle, TaskFactory.class, changeStyleProps);
+			registerService(bc, changeStyle, NetworkViewTaskFactory.class, changeStyleProps);
 		}
 		
+		// Menu task factories
 		SeqVizSettingsTaskFactory settingsTask = new SeqVizSettingsTaskFactory(
 				seqManager);
 		Properties settingsProps = new Properties();
