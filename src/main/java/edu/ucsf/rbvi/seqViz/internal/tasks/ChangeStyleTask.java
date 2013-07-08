@@ -23,6 +23,7 @@ public class ChangeStyleTask extends AbstractTask {
 	public void run(TaskMonitor arg0) throws Exception {
 		// TODO Auto-generated method stub
 		vs.apply(networkView);
+		networkView.updateView();
 	}
 
 }
