@@ -41,6 +41,7 @@ public class ContigsManager {
 	private CyNetwork network;
 	private BundleContext bundleContext;
 	private VisualStyle vs;
+	private CyNetworkView networkView = null;
 	
 	public ContigsManager(BundleContext bc, VisualStyle vs) {
 		contigs = new HashMap<String, Contig>();
@@ -51,7 +52,16 @@ public class ContigsManager {
 		this.network = networkFactory.createNetwork();
 		settings = new SeqVizSettings();
 	}
-	
+
+	public ContigsManager(BundleContext bc, CyNetwork curNetwork, VisualStyle vs) {
+		contigs = new HashMap<String, Contig>();
+		readPairs = new HashMap<String, ReadPair>();
+		bundleContext = bc;
+		this.vs = vs;
+		this.network = curNetwork;
+		settings = new SeqVizSettings();
+	}
+
 	/**
 	 * Initialize the settings for ContigsManager
 	 * 
@@ -401,6 +411,7 @@ public class ContigsManager {
 		CyNetworkViewManager networkViewManager = (CyNetworkViewManager) getService(CyNetworkViewManager.class);
 		networkViewManager.addNetworkView(myView);
 		
+		networkView = myView;
 	//	VisualMappingManager vmmServiceRef = (VisualMappingManager) getService(VisualMappingManager.class);
 	//	VisualStyleFactory visualStyleFactoryServiceRef = (VisualStyleFactory) getService(VisualStyleFactory.class);
 	/*	InputStream stream = CyActivator.class.getResourceAsStream("/seqVizStyle.xml");
@@ -417,6 +428,14 @@ public class ContigsManager {
 		if (vs != null)
 			vs.apply(myView);
 		myView.updateView();
+	}
+	
+	public void applyStyle(VisualStyle vs) {
+		if (networkView != null) {
+			if (vs != null)
+				vs.apply(networkView);
+			networkView.updateView();
+		}
 	}
 	
 	private Object getService(Class<?> serviceClass) {

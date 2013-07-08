@@ -34,11 +34,13 @@ public class SeqVizSettingsTask extends AbstractTask {
 	public void run(TaskMonitor arg0) throws Exception {
 		// TODO Auto-generated method stub
 		if (mapper.getSelectedValue().equals(mapperChoice[0])) {
+			int cores = Runtime.getRuntime().availableProcessors();
+			cores = cores-2;
 			if (!manager.isInitialized())
-				manager.initializeSettings(new SeqVizSettings(new BowtieMapReadsTask(manager), 2, mapDir, tempDir, loadBridgingReads));
+				manager.initializeSettings(new SeqVizSettings(new BowtieMapReadsTask(manager), cores, mapDir, tempDir, loadBridgingReads));
 			else {
 				manager.getSettings().mapReads = new BowtieMapReadsTask(manager);
-				manager.getSettings().threads = 2;
+				manager.getSettings().threads = cores;
 				manager.getSettings().mapper_dir = mapDir;
 				manager.getSettings().temp_dir = tempDir;
 				manager.getSettings().loadBridingReads = loadBridgingReads;

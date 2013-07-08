@@ -13,11 +13,13 @@ import java.io.File;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Properties;
 import java.util.Set;
 
 import javax.swing.ImageIcon;
 
+import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.application.swing.CySwingApplication;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNetworkFactory;
@@ -38,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.ucsf.rbvi.seqViz.internal.model.ContigsManager;
+import edu.ucsf.rbvi.seqViz.internal.tasks.ChangeStyleTaskFactory;
 import edu.ucsf.rbvi.seqViz.internal.tasks.MapReadsTaskFactory;
 import edu.ucsf.rbvi.seqViz.internal.tasks.ReadFASTAContigsTaskFactory;
 import edu.ucsf.rbvi.seqViz.internal.tasks.SeqVizSettingsTaskFactory;
@@ -77,6 +80,7 @@ public class CyActivator extends AbstractCyActivator {
 		networkViewManager.addNetworkView(myView); */
 		
 		// Load new Visual Style for seqViz
+		HashMap<String, VisualStyle> styles = new HashMap<String, VisualStyle>();
 		VisualMappingManager vmmServiceRef = getService(bc,VisualMappingManager.class);
 		InputStream stream = CyActivator.class.getResourceAsStream("/seqVizStyle.xml");
 		VisualStyle style = null;
@@ -87,8 +91,13 @@ public class CyActivator extends AbstractCyActivator {
 					for (VisualStyle vs: vsSet) {
 						vmmServiceRef.addVisualStyle(vs);
 						style = vs;
+						styles.put(vs.getTitle(), vs);
 					}
 		}
+		
+		// Get current network
+	/*	CyApplicationManager appManager = getService(bc, CyApplicationManager.class);
+		CyNetwork curNetwork = appManager.getCurrentNetwork(); */
 		
 		// Create the context object
 		ContigsManager seqManager = new ContigsManager(bc, style);
@@ -99,6 +108,22 @@ public class CyActivator extends AbstractCyActivator {
 		// Create and register our listeners
 	
 		// Menu task factories
+		// Load visual styles
+		for (String styleName: styles.keySet()) {
+			ChangeStyleTaskFactory changeStyle = new ChangeStyleTaskFactory(seqManager, styles.get(styleName));
+			Properties changeStyleProps = new Properties();
+			changeStyleProps.setProperty(PREFERRED_MENU, "Apps.SeqViz.Show Histograms");
+			changeStyleProps.setProperty(TITLE, styleName);
+			String command = "";
+			for (String s: styleName.split(" ")) command = command + s;
+			changeStyleProps.setProperty(COMMAND, command);
+			changeStyleProps.setProperty(COMMAND_NAMESPACE, "seqViz");
+			changeStyleProps.setProperty(IN_MENU_BAR, "true");
+			// settingsProps.setProperty(ENABLE_FOR, "network");
+			// mapReadsProps.setProperty(INSERT_SEPARATOR_BEFORE, "true");
+			changeStyleProps.setProperty(MENU_GRAVITY, "1.0");
+			registerService(bc, changeStyle, TaskFactory.class, changeStyleProps);
+		}
 		
 		SeqVizSettingsTaskFactory settingsTask = new SeqVizSettingsTaskFactory(
 				seqManager);
