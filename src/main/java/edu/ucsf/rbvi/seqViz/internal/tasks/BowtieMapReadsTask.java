@@ -45,9 +45,20 @@ public class BowtieMapReadsTask extends AbstractMapReadsTask {
 		
 		Process index = Runtime.getRuntime().exec(contigs.getSettings().mapper_dir + "bowtie2-build -f " + contigsFile.getAbsolutePath() + " " + contigs.getSettings().temp_dir + contigsFile.getName());
 		index.waitFor();
+		if (index.exitValue() != 0)
+			throw new Exception("bowtie2-build exited with error " + index.exitValue());
 		Process p = Runtime.getRuntime().exec(contigs.getSettings().mapper_dir + "bowtie2 -q --end-to-end --fast -p " + contigs.getSettings().threads + " --phred64 -a -x " + contigs.getSettings().temp_dir + contigsFile.getName() + " -1 " + mate1.getAbsolutePath() + " -2 " + mate2.getAbsolutePath());
 		AbstractMapOutputReader reader = new SAMReader(contigs);
 		reader.readReads(p.getInputStream(), arg0, readEstimate);
+		p.waitFor();
+		if (p.exitValue() != 0)
+			throw new Exception("bowtie2-align exited with error " + p.exitValue());
+	/*	File indexFile;
+		String[] suffixes = {".1.bt2", ".2.bt2", ".3.bt2", ".4.bt2", ".rev.1.bt2", ".rev.2.bt2"};
+		for (String suffix : suffixes) {
+			indexFile = new File(contigs.getSettings().temp_dir + contigsFile.getName() + suffix);
+			indexFile.delete();
+		} */
 		
 		contigs.displayBridgingReads();
 		contigs.createHist(200);

@@ -42,9 +42,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.ucsf.rbvi.seqViz.internal.model.ContigsManager;
+import edu.ucsf.rbvi.seqViz.internal.model.SeqVizSettings;
 import edu.ucsf.rbvi.seqViz.internal.tasks.ChangeStyleTaskFactory;
 import edu.ucsf.rbvi.seqViz.internal.tasks.MapReadsTaskFactory;
 import edu.ucsf.rbvi.seqViz.internal.tasks.ReadFASTAContigsTaskFactory;
+import edu.ucsf.rbvi.seqViz.internal.tasks.SeqVizSettingsTask;
 import edu.ucsf.rbvi.seqViz.internal.tasks.SeqVizSettingsTaskFactory;
 
 // TODO: Allow opening and closing the molecular navigator dialog
@@ -105,6 +107,34 @@ public class CyActivator extends AbstractCyActivator {
 		// Create the context object
 		ContigsManager seqManager = new ContigsManager(bc, style);
 
+		// Get OS information and set seqManager
+		String OS = System.getProperty("os.name").toLowerCase();
+		SeqVizSettingsTask setParams = new SeqVizSettingsTask(seqManager);
+		if (OS.indexOf("win") >= 0) {
+			setParams.loadBridgingReads = false;
+			setParams.mapDir = "";
+			setParams.tempDir = "%TEMP%\\";
+			setParams.mapper.setSelectedValue("bowtie");
+			try {
+				setParams.run(null);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		else if (OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") > 0 || OS.indexOf("sunos") >= 0 || OS.indexOf("mac") >= 0) {
+			setParams.loadBridgingReads = false;
+			setParams.mapDir = "";
+			setParams.tempDir = "/tmp/";
+			setParams.mapper.setSelectedValue("bowtie");
+			try {
+				setParams.run(null);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
 		// Get a handle on the CyServiceRegistrar
 		CyServiceRegistrar registrar = getService(bc, CyServiceRegistrar.class);
 
