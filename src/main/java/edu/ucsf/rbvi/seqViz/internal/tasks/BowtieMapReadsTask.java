@@ -53,12 +53,12 @@ public class BowtieMapReadsTask extends AbstractMapReadsTask {
 		p.waitFor();
 		if (p.exitValue() != 0)
 			throw new Exception("bowtie2-align exited with error " + p.exitValue());
-	/*	File indexFile;
+		File indexFile;
 		String[] suffixes = {".1.bt2", ".2.bt2", ".3.bt2", ".4.bt2", ".rev.1.bt2", ".rev.2.bt2"};
 		for (String suffix : suffixes) {
 			indexFile = new File(contigs.getSettings().temp_dir + contigsFile.getName() + suffix);
 			indexFile.delete();
-		} */
+		}
 		
 		contigs.displayBridgingReads();
 		contigs.createHist(200);

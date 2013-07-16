@@ -143,6 +143,9 @@ public class ContigsManager {
 		thisPair.addReadMappingInfo(contigName, readInfo);
 	}
 	
+	public Contig getContig(String name) {
+		return contigs.get(name);
+	}
 	/**
 	 * Function for loading contigs into the network.
 	 */
@@ -323,13 +326,21 @@ public class ContigsManager {
 			table.createListColumn("paired_end_hist_rev", Double.class, false);
 		if (table.getColumn("read_cov_hist") == null)
 			table.createListColumn("read_cov_hist", Double.class, false);
-		
+		if (table.getColumn("read_cov_hist_pos") == null)
+			table.createListColumn("read_cov_hist_pos", Double.class, false);
+		if (table.getColumn("read_cov_hist_rev") == null)
+			table.createListColumn("read_cov_hist_rev", Double.class, false);
+
 		if (table.getColumn("paired_end_hist_log") == null)
 			table.createListColumn("paired_end_hist_log", Double.class, false);
 		if (table.getColumn("paired_end_hist_rev_log") == null)
 			table.createListColumn("paired_end_hist_rev_log", Double.class, false);
 		if (table.getColumn("read_cov_hist_log") == null)
 			table.createListColumn("read_cov_hist_log", Double.class, false);
+		if (table.getColumn("read_cov_hist_pos_log") == null)
+			table.createListColumn("read_cov_hist_pos_log", Double.class, false);
+		if (table.getColumn("read_cov_hist_rev_log") == null)
+			table.createListColumn("read_cov_hist_rev_log", Double.class, false);
 		
 		if (table.getColumn("barchart_paired_end_hist") == null)
 			table.createColumn("barchart_paired_end_hist", String.class, false);
@@ -337,19 +348,27 @@ public class ContigsManager {
 			table.createColumn("barchart_paired_end_rev_hist", String.class, false);
 		if (table.getColumn("bartchart_read_cov_hist") == null)
 			table.createColumn("bartchart_read_cov_hist", String.class, false);
+		if (table.getColumn("bartchart_read_cov_rev_hist") == null)
+			table.createColumn("bartchart_read_cov_rev_hist", String.class, false);
 
-		double paired_end_min = 0, paired_end_max = 0, read_cov_max = 0, temp;
+		double paired_end_min = 0, paired_end_max = 0, read_cov_max = 0, temp, read_cov_pos_max = 0, read_cov_rev_max = 0;
 		for (String s: contigs.keySet()) {
 			double [] paired_end_hist = new double[(contigs.get(s).sequence().length() / binSize) + 1],
 					paired_end_hist_rev = new double[(contigs.get(s).sequence().length() / binSize) + 1],
-					read_cov_hist = new double[(contigs.get(s).sequence().length() / binSize) + 1];
+					read_cov_hist = new double[(contigs.get(s).sequence().length() / binSize) + 1],
+					read_cov_hist_pos = new double[(contigs.get(s).sequence().length() / binSize) + 1],
+					read_cov_hist_rev = new double[(contigs.get(s).sequence().length() / binSize) + 1];
 			for (ReadMappingInfo readInfo: contigs.get(s).allReads()) {
 				read_cov_hist[readInfo.locus() / binSize] += (double) readInfo.read().length() / (double) binSize;
 				if (! readInfo.sameContig()) {
-					if (readInfo.strand())
+					if (readInfo.strand()) {
 						paired_end_hist[readInfo.locus() / binSize] += (double) readInfo.read().length() / (double) binSize;
-					else
+						read_cov_hist_pos[readInfo.locus() / binSize] += (double) readInfo.read().length() / (double) binSize;
+					}
+					else {
 						paired_end_hist_rev[readInfo.locus() / binSize] -= (double) readInfo.read().length() / (double) binSize;
+						read_cov_hist_rev[readInfo.locus() / binSize] -= (double) readInfo.read().length() / (double) binSize;
+					}
 				}
 			}
 			ArrayList<Double>	a = new ArrayList<Double>(),
@@ -357,7 +376,11 @@ public class ContigsManager {
 								c = new ArrayList<Double>(),
 								d = new ArrayList<Double>(),
 								e = new ArrayList<Double>(),
-								f = new ArrayList<Double>();
+								f = new ArrayList<Double>(),
+								g = new ArrayList<Double>(),
+								h = new ArrayList<Double>(),
+								j = new ArrayList<Double>(),
+								k = new ArrayList<Double>();
 			for (int i = 0; i < paired_end_hist.length; i++) {
 				a.add(paired_end_hist[i]);
 			/*	if (paired_end_hist[i] == 0)
@@ -394,11 +417,28 @@ public class ContigsManager {
 			}
 			table.getRow(contigs.get(s).node.getSUID()).set("read_cov_hist", c);
 			table.getRow(contigs.get(s).node.getSUID()).set("read_cov_hist_log", f);
+			for (int i = 0; i < read_cov_hist_pos.length; i++) {
+				g.add(read_cov_hist_pos[i]);
+				h.add(temp = Math.log(read_cov_hist_pos[i] + 1));
+				if (temp > read_cov_pos_max)
+					read_cov_pos_max = temp;
+			}
+			table.getRow(contigs.get(s).node.getSUID()).set("read_cov_hist_pos", g);
+			table.getRow(contigs.get(s).node.getSUID()).set("read_cov_hist_pos_log", h);
+			for (int i = 0; i < read_cov_hist_rev.length; i++) {
+				j.add(read_cov_hist_rev[i]);
+				k.add(temp = Math.log(read_cov_hist_rev[i] + 1));
+				if (temp < read_cov_rev_max)
+					read_cov_rev_max = temp;
+			}
+			table.getRow(contigs.get(s).node.getSUID()).set("rev_cov_hist_rev", j);
+			table.getRow(contigs.get(s).node.getSUID()).set("rev_cov_hist_rev_log", k);
 		}
 		for (String s: contigs.keySet()) {
 			table.getRow(contigs.get(s).node.getSUID()).set("barchart_paired_end_hist", "barchart: attributelist=\"paired_end_hist_log\" showlabels=\"false\" colorlist=\"up:blue,down:yellow,zero:black\" range=\"" + paired_end_min + "," + paired_end_max + "\"");
 			table.getRow(contigs.get(s).node.getSUID()).set("barchart_paired_end_rev_hist", "barchart: attributelist=\"paired_end_hist_rev_log\" showlabels=\"false\" colorlist=\"up:blue,down:yellow,zero:black\" range=\"" + paired_end_min + "," + paired_end_max + "\"");
-			table.getRow(contigs.get(s).node.getSUID()).set("bartchart_read_cov_hist", "barchart: attributelist=\"read_cov_hist_log\" showlabels=\"false\" colorlist=\"up:blue,down:yellow,zero:black\" ybase=bottom range=\"0," + read_cov_max + "\"");
+			table.getRow(contigs.get(s).node.getSUID()).set("bartchart_read_cov_hist", "barchart: attributelist=\"read_cov_hist_pos_log\" showlabels=\"false\" colorlist=\"up:blue,down:yellow,zero:black\" range=\"" + read_cov_rev_max + "," + read_cov_pos_max + "\"");
+			table.getRow(contigs.get(s).node.getSUID()).set("bartchart_read_cov_rev_hist", "barchart: attributelist=\"read_cov_hist_rev_log\" showlabels=\"false\" colorlist=\"up:blue,down:yellow,zero:black\" range=\"" + read_cov_rev_max + "," + read_cov_pos_max + "\"");
 		}
 	}
 	

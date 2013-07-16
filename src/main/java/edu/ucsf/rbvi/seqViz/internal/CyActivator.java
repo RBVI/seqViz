@@ -28,6 +28,7 @@ import org.cytoscape.service.util.AbstractCyActivator;
 import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.task.AbstractNetworkViewTaskFactory;
 import org.cytoscape.task.NetworkViewTaskFactory;
+import org.cytoscape.task.NodeViewTaskFactory;
 import org.cytoscape.task.read.LoadVizmapFileTaskFactory;
 import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.CyNetworkViewFactory;
@@ -45,6 +46,7 @@ import edu.ucsf.rbvi.seqViz.internal.model.ContigsManager;
 import edu.ucsf.rbvi.seqViz.internal.model.SeqVizSettings;
 import edu.ucsf.rbvi.seqViz.internal.tasks.ChangeStyleTaskFactory;
 import edu.ucsf.rbvi.seqViz.internal.tasks.MapReadsTaskFactory;
+import edu.ucsf.rbvi.seqViz.internal.tasks.OpenContigViewTaskFactory;
 import edu.ucsf.rbvi.seqViz.internal.tasks.ReadFASTAContigsTaskFactory;
 import edu.ucsf.rbvi.seqViz.internal.tasks.SeqVizSettingsTask;
 import edu.ucsf.rbvi.seqViz.internal.tasks.SeqVizSettingsTaskFactory;
@@ -194,6 +196,18 @@ public class CyActivator extends AbstractCyActivator {
 		// mapReadsProps.setProperty(INSERT_SEPARATOR_BEFORE, "true");
 		mapReadsProps.setProperty(MENU_GRAVITY, "8.0");
 		registerService(bc, mapReadsTask, TaskFactory.class, mapReadsProps);
+		
+		OpenContigViewTaskFactory contigViewTaskFactory = new OpenContigViewTaskFactory(seqManager);
+		Properties contigViewProps = new Properties();
+		contigViewProps.setProperty(PREFERRED_MENU, "Apps.SeqViz");
+		contigViewProps.setProperty(TITLE, "Open Contig View");
+		contigViewProps.setProperty(COMMAND, "openContigView");
+		contigViewProps.setProperty(COMMAND_NAMESPACE, "seqViz");
+		contigViewProps.setProperty(IN_MENU_BAR, "true");
+		// settingsProps.setProperty(ENABLE_FOR, "network");
+		// mapReadsProps.setProperty(INSERT_SEPARATOR_BEFORE, "true");
+		contigViewProps.setProperty(MENU_GRAVITY, "9.0");
+		registerService(bc, contigViewTaskFactory, NodeViewTaskFactory.class, contigViewProps);
 	}
 
 }
