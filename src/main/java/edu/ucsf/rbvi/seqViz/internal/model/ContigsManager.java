@@ -360,15 +360,15 @@ public class ContigsManager {
 					read_cov_hist_rev = new double[(contigs.get(s).sequence().length() / binSize) + 1];
 			for (ReadMappingInfo readInfo: contigs.get(s).allReads()) {
 				read_cov_hist[readInfo.locus() / binSize] += (double) readInfo.read().length() / (double) binSize;
+				if (readInfo.strand())
+					read_cov_hist_pos[readInfo.locus() / binSize] += (double) readInfo.read().length() / (double) binSize;
+				else
+					read_cov_hist_rev[readInfo.locus() / binSize] -= (double) readInfo.read().length() / (double) binSize;
 				if (! readInfo.sameContig()) {
-					if (readInfo.strand()) {
+					if (readInfo.strand())
 						paired_end_hist[readInfo.locus() / binSize] += (double) readInfo.read().length() / (double) binSize;
-						read_cov_hist_pos[readInfo.locus() / binSize] += (double) readInfo.read().length() / (double) binSize;
-					}
-					else {
+					else
 						paired_end_hist_rev[readInfo.locus() / binSize] -= (double) readInfo.read().length() / (double) binSize;
-						read_cov_hist_rev[readInfo.locus() / binSize] -= (double) readInfo.read().length() / (double) binSize;
-					}
 				}
 			}
 			ArrayList<Double>	a = new ArrayList<Double>(),
@@ -427,12 +427,12 @@ public class ContigsManager {
 			table.getRow(contigs.get(s).node.getSUID()).set("read_cov_hist_pos_log", h);
 			for (int i = 0; i < read_cov_hist_rev.length; i++) {
 				j.add(read_cov_hist_rev[i]);
-				k.add(temp = Math.log(read_cov_hist_rev[i] + 1));
+				k.add(temp = - Math.log(- read_cov_hist_rev[i] + 1));
 				if (temp < read_cov_rev_max)
 					read_cov_rev_max = temp;
 			}
-			table.getRow(contigs.get(s).node.getSUID()).set("rev_cov_hist_rev", j);
-			table.getRow(contigs.get(s).node.getSUID()).set("rev_cov_hist_rev_log", k);
+			table.getRow(contigs.get(s).node.getSUID()).set("read_cov_hist_rev", j);
+			table.getRow(contigs.get(s).node.getSUID()).set("read_cov_hist_rev_log", k);
 		}
 		for (String s: contigs.keySet()) {
 			table.getRow(contigs.get(s).node.getSUID()).set("barchart_paired_end_hist", "barchart: attributelist=\"paired_end_hist_log\" showlabels=\"false\" colorlist=\"up:blue,down:yellow,zero:black\" range=\"" + paired_end_min + "," + paired_end_max + "\"");

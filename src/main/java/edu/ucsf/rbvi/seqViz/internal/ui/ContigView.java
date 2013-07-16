@@ -29,11 +29,14 @@ public class ContigView extends JPanel {
 	public ContigView(ContigsManager manager, String contig) {
 		this.manager = manager;
 		this.contig = manager.getContig(contig);
-				
+		
+		histoPane = new JScrollPane();
 		histoPanel = new JPanel();
+		histoPanel.setMinimumSize(new Dimension(800,400));
 		histoPanel.setLayout(new BorderLayout());
 		zoomPane = new JPanel(new FlowLayout());
 		histoPanel.add(zoomPane, BorderLayout.SOUTH);
+		histoPanel.add(histoPane, BorderLayout.CENTER);
 		zoomIn = new JButton("Zoom In");
 		zoomOut = new JButton("Zoom Out");
 		left = new JButton("<<<");
@@ -43,13 +46,11 @@ public class ContigView extends JPanel {
 		zoomPane.add(zoomOut);
 		zoomPane.add(right);
 	//	histoPane.add(histoPanel);
-		histoPane = new JScrollPane(histoPanel);
-		histoPane.setMinimumSize(new Dimension(800,400));
 
 		settingsPane = new JScrollPane();
 		settingsPane.setMaximumSize(new Dimension(300,400));
 		
-		splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, histoPane, settingsPane);
+		splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, histoPanel, settingsPane);
 		Dimension splitPaneSize = new Dimension(1100,400);
 		splitPane.setPreferredSize(splitPaneSize);
 		splitPane.setOneTouchExpandable(true);
