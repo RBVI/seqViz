@@ -8,12 +8,16 @@ import java.awt.Graphics;
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+
+import org.cytoscape.model.CyNetwork;
+import org.cytoscape.model.CyTable;
 
 import edu.ucsf.rbvi.seqViz.internal.model.ComplementaryGraphs;
 import edu.ucsf.rbvi.seqViz.internal.model.Contig;
@@ -94,6 +98,58 @@ public class ContigView extends JPanel {
 		}
 	}
 	
+	public ContigView(CyNetwork network, String contig) {
+		CyTable table = network.getDefaultNetworkTable();
+		long contigLength = 0;
+		List<String> graphs = table.getRow(network.getSUID()).getList(contig + ":graphColumns", String.class);
+		for (String s: graphs) {
+			List<Long> graph = table.getRow(network.getSUID()).getList(s, Long.class);
+			contigLength = graph.size();
+			for (Long l: graph) {
+				if (l > 0) y_max = l > y_max ? l: y_max;
+				else y_min = l < y_min ? l: y_min;
+			}
+		}
+		
+		histoPanel2 = new HistoPanel(800, 400, 0, contigLength, y_min, y_max);
+		histoPane = new JScrollPane(histoPanel2);
+		histoPanel = new JPanel();
+		histoPanel.setMinimumSize(new Dimension(800,400));
+		histoPanel.setLayout(new BorderLayout());
+		zoomPane = new JPanel(new FlowLayout());
+		histoPanel.add(zoomPane, BorderLayout.SOUTH);
+		histoPanel.add(histoPane, BorderLayout.CENTER);
+		zoomIn = new JButton("Zoom In");
+		zoomOut = new JButton("Zoom Out");
+		left = new JButton("<<<");
+		right = new JButton(">>>");
+		zoomPane.add(left);
+		zoomPane.add(zoomIn);
+		zoomPane.add(zoomOut);
+		zoomPane.add(right);
+
+		settingsPane = new JScrollPane();
+		settingsPane.setMaximumSize(new Dimension(300,400));
+		
+		splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, histoPanel, settingsPane);
+		Dimension splitPaneSize = new Dimension(1100,400);
+		splitPane.setPreferredSize(splitPaneSize);
+		splitPane.setOneTouchExpandable(true);
+		setPreferredSize(splitPaneSize);
+		
+		for (String s: graphs) {
+			List<Long> graph = table.getRow(network.getSUID()).getList(s, Long.class);
+			double[] y = new double[graph.size()], x = new double[graph.size()];
+			int i = 0;
+			for (Long l: graph) {
+				y[i] = l;
+				x[i] = i + 1;
+				i++;
+			}
+			histoPanel2.addGraph(s, Color.BLUE, x, y);
+		}
+	}
+
 	public JSplitPane splitPane() {return splitPane;}
 }
 
@@ -143,19 +199,19 @@ class HistoPanel extends JPanel {
 		g.setColor(Color.BLACK);
 		g.fillRect(x_center, y_center - 2, width, 4);
 		for (int i = x_center; i < width; i += 100) {
-			g.drawString((new Double(i / x_inc)).toString(), i, y_center - 5);
+			g.drawString(String.format("%.1f", i / x_inc), i, y_center - 5);
 			g.drawLine(i, y_center - 5, i, y_center + 5);
 		}
 		for (int i = x_center; i > 0; i -= 100) {
-			g.drawString((new Double(i / x_inc)).toString(), i, y_center - 5);
+			g.drawString(String.format("%.1f", i / x_inc), i, y_center - 5);
 			g.drawLine(i, y_center - 5, i, y_center + 5);
 		}
 		for (int i = y_center; i > 0; i -= 50) {
-			g.drawString((new Double((y_center - i) / y_inc)).toString(), x_center, i);
+			g.drawString(String.format("%.1f", (y_center - i) / y_inc), x_center, i);
 			g.drawLine(x_center, i, width, i);
 		}
 		for (int i = y_center; i < height; i += 50) {
-			g.drawString((new Double((y_center - i) / y_inc)).toString(), x_center, i);
+			g.drawString(String.format("%.1f", (y_center - i) / y_inc), x_center, i);
 			g.drawLine(x_center, i, width, i);
 		}
 	}

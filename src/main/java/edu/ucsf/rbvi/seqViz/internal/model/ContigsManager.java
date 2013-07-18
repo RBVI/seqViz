@@ -475,6 +475,40 @@ public class ContigsManager {
 		return y;
 	}
 	
+	public void loadBpGraphs() {
+		CyTable table = network.getDefaultNetworkTable();
+		for (String s: contigs.keySet()) {
+			ArrayList<String> colNames = new ArrayList<String>();
+			ComplementaryGraphs graphs = createBpGraph(s);
+			String colName;
+			for (String contigName: graphs.pos.keySet()) {
+				colName = s + ":" + contigName + ":" + "pos";
+				if (table.getColumn(colName) == null)
+					table.createListColumn(colName, Long.class, false);
+				List<Long> newList = new ArrayList<Long>();
+				long[] temp = graphs.pos.get(contigName);
+				for (int i = 0; i < temp.length; i++)
+					newList.add(temp[i]);
+				table.getRow(network.getSUID()).set(colName, newList);
+				colNames.add(colName);
+			}
+			for (String contigName: graphs.rev.keySet()) {
+				colName = s + ":" + contigName + ":" + "rev";
+				if (table.getColumn(colName) == null)
+					table.createListColumn(colName, Long.class, false);
+				List<Long> newList = new ArrayList<Long>();
+				long[] temp = graphs.rev.get(contigName);
+				for (int i = 0; i < temp.length; i++)
+					newList.add(-temp[i]);
+				table.getRow(network.getSUID()).set(colName, newList);
+				colNames.add(colName);
+			}
+			if (table.getColumn(s + ":graphColumns") == null)
+				table.createListColumn(s + ":graphColumns", String.class, false);
+			table.getRow(network.getSUID()).set(s + ":graphColumns", colNames);
+		}
+	}
+	
 	public void displayNetwork() {
 		CyNetworkManager networkManager = (CyNetworkManager) getService(CyNetworkManager.class);
 		networkManager.addNetwork(network);

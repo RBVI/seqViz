@@ -17,6 +17,7 @@ public class OpenContigViewTask extends AbstractNodeViewTask {
 	
 	private ContigsManager manager;
 	private String contig;
+	private CyNetwork cyNetwork;
 	
 	public OpenContigViewTask(View<CyNode> nodeView, CyNetworkView netView) {
 		super(nodeView, netView);
@@ -25,12 +26,14 @@ public class OpenContigViewTask extends AbstractNodeViewTask {
 	public OpenContigViewTask(View<CyNode> nodeView, CyNetworkView netView, ContigsManager manager) {
 		super(nodeView, netView);
 		contig = netView.getModel().getDefaultNodeTable().getRow(nodeView.getModel().getSUID()).get(CyNetwork.NAME, String.class);
+		cyNetwork = netView.getModel();
 		this.manager = manager;
 	}
 
 	@Override
 	public void run(TaskMonitor arg0) throws Exception {
-		ContigView panel = new ContigView(manager, contig);
+	//	ContigView panel = new ContigView(manager, contig);
+		ContigView panel = new ContigView(cyNetwork, contig);
 		JFrame frame = new JFrame(contig);
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		frame.getContentPane().add(panel.splitPane());
