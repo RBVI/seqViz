@@ -15,7 +15,6 @@ import edu.ucsf.rbvi.seqViz.internal.ui.ContigView;
 
 public class OpenContigViewTask extends AbstractNodeViewTask {
 	
-	private ContigView contigView;
 	private ContigsManager manager;
 	private String contig;
 	

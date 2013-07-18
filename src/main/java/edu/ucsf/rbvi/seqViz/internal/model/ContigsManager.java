@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -442,6 +443,38 @@ public class ContigsManager {
 		}
 	}
 	
+	public ComplementaryGraphs createBpGraph(String contigName) {
+		ComplementaryGraphs y = new ComplementaryGraphs();
+		for (ReadMappingInfo read: contigs.get(contigName).allReads()) {
+			ReadPair pair = readPairs.get(read.read().name());
+			Set<String> pairContigs;
+			if (read.read().pair())
+				pairContigs = pair.getMate2Contigs();
+			else
+				pairContigs = pair.getMate1Contigs();
+			if (pairContigs == null) {
+				pairContigs = new HashSet<String>();
+				pairContigs.add(null);
+			}
+			for (String c: pairContigs) {
+				HashMap<String, long[]> covGraphs;
+				if (read.strand()) covGraphs = y.pos;
+				else covGraphs = y.rev;
+				long[] covGraph;
+				if (covGraphs.containsKey(c))
+					covGraph = covGraphs.get(c);
+				else {
+					covGraph = new long[contigs.get(contigName).sequence().length()];
+					covGraphs.put(c, covGraph);
+				}
+				for (int i = 0; i < read.read().length(); i++)
+					if (i + read.locus() -1 < covGraph.length)
+						covGraph[i + read.locus() -1] += 1;
+			}
+		}
+		return y;
+	}
+	
 	public void displayNetwork() {
 		CyNetworkManager networkManager = (CyNetworkManager) getService(CyNetworkManager.class);
 		networkManager.addNetwork(network);
@@ -452,19 +485,6 @@ public class ContigsManager {
 		networkViewManager.addNetworkView(myView);
 		
 		networkView = myView;
-	//	VisualMappingManager vmmServiceRef = (VisualMappingManager) getService(VisualMappingManager.class);
-	//	VisualStyleFactory visualStyleFactoryServiceRef = (VisualStyleFactory) getService(VisualStyleFactory.class);
-	/*	InputStream stream = CyActivator.class.getResourceAsStream("/seqVizStyle.xml");
-		VisualStyle style = null;
-		if (stream != null) {
-				LoadVizmapFileTaskFactory loadVizmapFileTaskFactory =  (LoadVizmapFileTaskFactory) getService(LoadVizmapFileTaskFactory.class);
-				Set<VisualStyle> vsSet = loadVizmapFileTaskFactory.loadStyles(stream);
-				if (vsSet != null)
-					for (VisualStyle vs: vsSet) {
-					//	vmmServiceRef.addVisualStyle(vs);
-						style = vs;
-					}
-		} */
 		if (vs != null)
 			vs.apply(myView);
 		myView.updateView();

@@ -15,6 +15,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 
+import edu.ucsf.rbvi.seqViz.internal.model.ComplementaryGraphs;
 import edu.ucsf.rbvi.seqViz.internal.model.Contig;
 import edu.ucsf.rbvi.seqViz.internal.model.ContigsManager;
 
@@ -27,15 +28,27 @@ public class ContigView extends JPanel {
 	private JButton zoomIn, zoomOut, left, right;
 	private JSplitPane splitPane;
 	private JScrollPane histoPane, settingsPane;
-	private JPanel histoPanel, zoomPane, histoPanel2;
+	private JPanel histoPanel, zoomPane;
+	private HistoPanel histoPanel2;
 	private ContigsManager manager;
 	private Contig contig;
+	private ComplementaryGraphs graphs;
+	private long y_min = 0, y_max = 0;
 	
 	public ContigView(ContigsManager manager, String contig) {
 		this.manager = manager;
 		this.contig = manager.getContig(contig);
+		graphs = manager.createBpGraph(contig);
 		
-		histoPanel2 = new HistoPanel(800, 400, 0, 1000, -10, 11);
+		for (long [] d: graphs.pos.values())
+			for (int i = 0; i < d.length; i++)
+				y_max = d[i] > y_max ? d[i]: y_max;
+		for (long [] d: graphs.rev.values())
+			for (int i = 0; i < d.length; i++)
+				y_min = d[i] > y_min ? d[i]: y_min;
+		y_min = - y_min;
+		
+		histoPanel2 = new HistoPanel(800, 400, 0, this.contig.sequence().length(), y_min, y_max);
 		histoPane = new JScrollPane(histoPanel2);
 		histoPanel = new JPanel();
 		histoPanel.setMinimumSize(new Dimension(800,400));
@@ -51,7 +64,6 @@ public class ContigView extends JPanel {
 		zoomPane.add(zoomIn);
 		zoomPane.add(zoomOut);
 		zoomPane.add(right);
-	//	histoPane.add(histoPanel);
 
 		settingsPane = new JScrollPane();
 		settingsPane.setMaximumSize(new Dimension(300,400));
@@ -61,6 +73,25 @@ public class ContigView extends JPanel {
 		splitPane.setPreferredSize(splitPaneSize);
 		splitPane.setOneTouchExpandable(true);
 		setPreferredSize(splitPaneSize);
+		
+		for (String s: graphs.pos.keySet()) {
+			long[] d = graphs.pos.get(s);
+			double[] y = new double[d.length], x = new double[d.length];
+			for (int i = 0; i < y.length; i++) {
+				y[i] = d[i];
+				x[i] = i + 1;
+			}
+			histoPanel2.addGraph(s, Color.BLUE, x, y);
+		}
+		for (String s: graphs.rev.keySet()) {
+			long[] d = graphs.rev.get(s);
+			double[] y = new double[d.length], x = new double[d.length];
+			for (int i = 0; i < y.length; i++) {
+				y[i] = -d[i];
+				x[i] = i + 1;
+			}
+			histoPanel2.addGraph(s + " reverse", Color.YELLOW, x, y);
+		}
 	}
 	
 	public JSplitPane splitPane() {return splitPane;}
@@ -132,13 +163,6 @@ class HistoPanel extends JPanel {
 	private void drawLineGraph(Graphics g, double[] xy, Color c) {
 		g.setColor(c);
 		double[] final_coordinates = new double[xy.length];
-	/*	if (x.length == y.length) {
-			double[] xy = new double[x.length + y.length];
-			for (int i = 0; i < x.length; i++) {
-				xy[2 * i] = x[i];
-				xy[2 * i + 1] = y[i];
-			}
-		} */
 		transform.transform(xy, 0, final_coordinates, 0, xy.length/2);
 		for (int i = 0; i < final_coordinates.length - 2; i += 2) {
 			g.drawLine((int) final_coordinates[i], (int) final_coordinates[i+1], (int) final_coordinates[i+2], (int) final_coordinates[i+3]);
