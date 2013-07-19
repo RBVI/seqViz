@@ -1,17 +1,28 @@
 package edu.ucsf.rbvi.seqViz.internal.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Checkbox;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JColorChooser;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -32,14 +43,14 @@ public class ContigView extends JPanel {
 	private JButton zoomIn, zoomOut, left, right;
 	private JSplitPane splitPane;
 	private JScrollPane histoPane, settingsPane;
-	private JPanel histoPanel, zoomPane;
+	private JPanel histoPanel, zoomPane, settingsPanel;
 	private HistoPanel histoPanel2;
 	private ContigsManager manager;
 	private Contig contig;
 	private ComplementaryGraphs graphs;
 	private long y_min = 0, y_max = 0;
 	
-	public ContigView(ContigsManager manager, String contig) {
+/*	public ContigView(ContigsManager manager, String contig) {
 		this.manager = manager;
 		this.contig = manager.getContig(contig);
 		graphs = manager.createBpGraph(contig);
@@ -96,12 +107,14 @@ public class ContigView extends JPanel {
 			}
 			histoPanel2.addGraph(s + " reverse", Color.YELLOW, x, y);
 		}
-	}
+	} */
 	
 	public ContigView(CyNetwork network, String contig) {
 		CyTable table = network.getDefaultNetworkTable();
 		long contigLength = 0;
 		List<String> graphs = table.getRow(network.getSUID()).getList(contig + ":graphColumns", String.class);
+		JPanel[] graphColor = new JPanel[graphs.size()];
+		Random random = new Random(70);
 		for (String s: graphs) {
 			List<Long> graph = table.getRow(network.getSUID()).getList(s, Long.class);
 			contigLength = graph.size();
@@ -111,7 +124,57 @@ public class ContigView extends JPanel {
 			}
 		}
 		
+		settingsPanel = new JPanel();
+		settingsPanel.setLayout(new GridLayout(0, 3));
+
 		histoPanel2 = new HistoPanel(800, 400, 0, contigLength, y_min, y_max);
+		int j = 0;
+		for (final String s: graphs) {
+			List<Long> graph = table.getRow(network.getSUID()).getList(s, Long.class);
+			double[] y = new double[graph.size()], x = new double[graph.size()];
+			int i = 0;
+			for (Long l: graph) {
+				y[i] = l;
+				x[i] = i + 1;
+				i++;
+			}
+			final Color randomColor = new Color(((int) (random.nextFloat() * 4)) * 64, ((int) (random.nextFloat() * 4)) * 64, ((int) (random.nextFloat() * 4)) * 64);
+			histoPanel2.addGraph(s, randomColor, x, y);
+		//	JPanel newGraphColor = new JPanel();
+		//	graphColor[j] = newGraphColor;
+		//	newGraphColor.setLayout(new FlowLayout());
+			JLabel nodeTitle = new JLabel(s.split(":")[1] + "-" + s.split(":")[2]);
+			nodeTitle.setFont(new Font(Font.DIALOG, Font.PLAIN, 12));
+		//	newGraphColor.add(nodeTitle);
+			settingsPanel.add(nodeTitle);
+			final JButton colorButton;
+		//	newGraphColor.add(colorButton = new JButton("Graph Color"));
+			settingsPanel.add(colorButton = new JButton("Graph Color"));
+			colorButton.setBackground(randomColor);
+			colorButton.addActionListener(new ActionListener() {
+				
+				public void actionPerformed(ActionEvent e) {
+					Color c = JColorChooser.showDialog(splitPane,
+							"Choose color of graph", colorButton.getBackground());
+					histoPanel2.changeColor(s, c);
+					colorButton.setBackground(c);
+					histoPanel2.repaint();
+				}
+			});
+			final JCheckBox b = new JCheckBox("Display Graph");
+			b.setFont(new Font(Font.DIALOG, Font.PLAIN, 10));
+			b.setSelected(true);
+			b.addItemListener(new ItemListener() {
+				
+				public void itemStateChanged(ItemEvent e) {
+					histoPanel2.setGraphVisible(s, b.isSelected());
+					histoPanel2.repaint();
+				}
+			});
+		//	newGraphColor.add(b);
+			settingsPanel.add(b);
+			j++;
+		}
 		histoPane = new JScrollPane(histoPanel2);
 		histoPanel = new JPanel();
 		histoPanel.setMinimumSize(new Dimension(800,400));
@@ -128,7 +191,9 @@ public class ContigView extends JPanel {
 		zoomPane.add(zoomOut);
 		zoomPane.add(right);
 
-		settingsPane = new JScrollPane();
+	//	for (int i = 0; i < graphColor.length; i++)
+	//		settingsPanel.add(graphColor[i]);
+		settingsPane = new JScrollPane(settingsPanel);
 		settingsPane.setMaximumSize(new Dimension(300,400));
 		
 		splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, histoPanel, settingsPane);
@@ -136,18 +201,6 @@ public class ContigView extends JPanel {
 		splitPane.setPreferredSize(splitPaneSize);
 		splitPane.setOneTouchExpandable(true);
 		setPreferredSize(splitPaneSize);
-		
-		for (String s: graphs) {
-			List<Long> graph = table.getRow(network.getSUID()).getList(s, Long.class);
-			double[] y = new double[graph.size()], x = new double[graph.size()];
-			int i = 0;
-			for (Long l: graph) {
-				y[i] = l;
-				x[i] = i + 1;
-				i++;
-			}
-			histoPanel2.addGraph(s, Color.BLUE, x, y);
-		}
 	}
 
 	public JSplitPane splitPane() {return splitPane;}
@@ -188,29 +241,50 @@ class HistoPanel extends JPanel {
 		super.paintComponent(g);
 		drawAxes(g);
 		for (Graphs graph: graphs.values())
-			drawLineGraph(g, graph.points, graph.color);
+			if (graph.draw) drawLineGraph(g, graph.points, graph.color);
 	}
 	
 	public void addGraph(String name, Color c, double[] x, double[] y) {
 		graphs.put(name, new Graphs(c, x, y));
 	}
 	
+	public void changeColor(String name, Color c) {
+		if (graphs.containsKey(name)) {
+			Graphs g = graphs.get(name);
+			g.color = c;
+		}
+	}
+	
+	public void setGraphVisible(String name, boolean display) {
+		if (graphs.containsKey(name)) {
+			Graphs g = graphs.get(name);
+			g.draw = display;
+		}
+	}
+	
 	private void drawAxes(Graphics g) {
 		g.setColor(Color.BLACK);
+		g.setFont(new Font(Font.DIALOG, Font.PLAIN, 10));
 		g.fillRect(x_center, y_center - 2, width, 4);
-		for (int i = x_center; i < width; i += 100) {
+		double x_step = 100;
+		double y_step = 50;
+		for (double j = x_center; j < width; j += x_step) {
+			int i = (int) j;
 			g.drawString(String.format("%.1f", i / x_inc), i, y_center - 5);
 			g.drawLine(i, y_center - 5, i, y_center + 5);
 		}
-		for (int i = x_center; i > 0; i -= 100) {
+		for (int j = x_center; j > 0; j -= x_step) {
+			int i = (int) j;
 			g.drawString(String.format("%.1f", i / x_inc), i, y_center - 5);
 			g.drawLine(i, y_center - 5, i, y_center + 5);
 		}
-		for (int i = y_center; i > 0; i -= 50) {
+		for (int j = y_center; j > 0; j -= y_step) {
+			int i = (int) j;
 			g.drawString(String.format("%.1f", (y_center - i) / y_inc), x_center, i);
 			g.drawLine(x_center, i, width, i);
 		}
-		for (int i = y_center; i < height; i += 50) {
+		for (int j = y_center; j < height; j += y_step) {
+			int i = (int) j;
 			g.drawString(String.format("%.1f", (y_center - i) / y_inc), x_center, i);
 			g.drawLine(x_center, i, width, i);
 		}
@@ -226,13 +300,16 @@ class HistoPanel extends JPanel {
 	}
 	
 	private class Graphs {
+		public boolean draw;
 		public Color color;
 		public double[] points;
 		public Graphs(Color c, double[] p) {
+			draw = true;
 			color = c;
 			points = p;
 		}
 		public Graphs(Color c, double[] x, double[] y) {
+			draw = true;
 			color = c;
 			if (x.length == y.length) {
 				double[] xy = new double[x.length + y.length];

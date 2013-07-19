@@ -61,13 +61,13 @@ public class SAMReader extends AbstractMapOutputReader {
 					if (contigs == null) throw new Exception("ContigManager not initialized.");
 					if (mate1) {
 						if (read1 == null)
-							read1 = new Read(readName, true, seq.length(), seq);
+							read1 = new Read(readName, true, seq.length(), null);
 						contigs.addRead(contig, new ReadMappingInfo(read1, score, locus, !reverse, sameContig));
 					//	contigs.addRead(contig, read1, score, locus, !reverse);
 					}
 					if (mate2) {
 						if (read2 == null)
-							read2 = new Read(readName, false, seq.length(), seq);
+							read2 = new Read(readName, false, seq.length(), null);
 						contigs.addRead(contig, new ReadMappingInfo(read2, score, locus, !reverse, sameContig));
 					//	contigs.addRead(contig, read2, score, locus, !reverse);
 					}
