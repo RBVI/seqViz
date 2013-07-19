@@ -40,7 +40,7 @@ public class ContigView {
 	 * 
 	 */
 	private static final long serialVersionUID = -7713836441534331408L;
-	private JButton zoomIn, zoomOut;
+	private JButton zoomIn, zoomOut, zoomInY, zoomOutY;
 	private JSplitPane splitPane;
 	private JScrollPane histoPane, settingsPane;
 	private JPanel histoPanel, zoomPane, settingsPanel;
@@ -209,8 +209,40 @@ public class ContigView {
 				}
 			}
 		});
+		zoomInY = new JButton("Zoom In");
+		zoomInY.addActionListener(new ActionListener() {
+			
+			public void actionPerformed(ActionEvent e) {
+				if (height * heightScale < y_max - y_min) {
+					heightScale *= 2;
+					histoPanel2.setHistoPanelSize(width * widthScale, height * heightScale);
+					histoPanel2.repaint();
+					histoPanel2.revalidate();
+				}
+			}
+		});
+		zoomOutY = new JButton("Zoom Out");
+		zoomOutY.addActionListener(new ActionListener() {
+			
+			public void actionPerformed(ActionEvent e) {
+				if (heightScale > 1) {
+					heightScale /= 2;
+					histoPanel2.setHistoPanelSize(width * widthScale, height * heightScale);
+					histoPanel2.repaint();
+					histoPanel2.revalidate();
+				}
+			}
+		});
+		JLabel xAxis = new JLabel("X-Axis Zoom:");
+		xAxis.setFont(new Font(Font.DIALOG, Font.PLAIN, 12));
+		zoomPane.add(xAxis);
 		zoomPane.add(zoomIn);
 		zoomPane.add(zoomOut);
+		JLabel yAxis = new JLabel("Y-Axis Zoom:");
+		yAxis.setFont(new Font(Font.DIALOG, Font.PLAIN, 12));
+		zoomPane.add(yAxis);
+		zoomPane.add(zoomInY);
+		zoomPane.add(zoomOutY);
 
 	//	for (int i = 0; i < graphColor.length; i++)
 	//		settingsPanel.add(graphColor[i]);
