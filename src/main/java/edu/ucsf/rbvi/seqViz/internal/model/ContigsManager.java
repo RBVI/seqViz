@@ -474,7 +474,37 @@ public class ContigsManager {
 		}
 		return y;
 	}
-	
+
+	public ComplementaryGraphs createBpGraph(String contigName, int binSize) {
+		ComplementaryGraphs y = new ComplementaryGraphs();
+		for (ReadMappingInfo read: contigs.get(contigName).allReads()) {
+			ReadPair pair = readPairs.get(read.read().name());
+			Set<String> pairContigs;
+			if (read.read().pair())
+				pairContigs = pair.getMate2Contigs();
+			else
+				pairContigs = pair.getMate1Contigs();
+			if (pairContigs == null) {
+				pairContigs = new HashSet<String>();
+				pairContigs.add(null);
+			}
+			for (String c: pairContigs) {
+				HashMap<String, long[]> covGraphs;
+				if (read.strand()) covGraphs = y.pos;
+				else covGraphs = y.rev;
+				long[] covGraph;
+				if (covGraphs.containsKey(c))
+					covGraph = covGraphs.get(c);
+				else {
+					covGraph = new long[(contigs.get(contigName).sequence().length() / binSize) + 1];
+					covGraphs.put(c, covGraph);
+				}
+				covGraph[(read.locus() - 1) / binSize] += read.read().length();
+			}
+		}
+		return y;
+	}
+
 	public void loadBpGraphs() {
 		CyTable table = network.getDefaultNetworkTable();
 		for (String s: contigs.keySet()) {
@@ -482,7 +512,7 @@ public class ContigsManager {
 			ComplementaryGraphs graphs = createBpGraph(s);
 			String colName;
 			for (String contigName: graphs.pos.keySet()) {
-				colName = s + ":" + contigName + ":" + "pos";
+				colName = s + ":" + (contigName != null ? contigName : "unpaired") + ":" + "pos";
 				if (table.getColumn(colName) == null)
 					table.createListColumn(colName, Long.class, false);
 				List<Long> newList = new ArrayList<Long>();
@@ -493,7 +523,7 @@ public class ContigsManager {
 				colNames.add(colName);
 			}
 			for (String contigName: graphs.rev.keySet()) {
-				colName = s + ":" + contigName + ":" + "rev";
+				colName = s + ":" + (contigName != null ? contigName : "unpaired") + ":" + "rev";
 				if (table.getColumn(colName) == null)
 					table.createListColumn(colName, Long.class, false);
 				List<Long> newList = new ArrayList<Long>();
@@ -509,6 +539,43 @@ public class ContigsManager {
 		}
 	}
 	
+	public void loadBpGraphs(int binSize) {
+		CyTable table = network.getDefaultNetworkTable();
+		for (String s: contigs.keySet()) {
+			ArrayList<String> colNames = new ArrayList<String>();
+			ComplementaryGraphs graphs = createBpGraph(s, binSize);
+			String colName;
+			for (String contigName: graphs.pos.keySet()) {
+				colName = s + ":" + (contigName != null ? contigName : "unpaired") + ":" + "pos";
+				if (table.getColumn(colName) == null)
+					table.createListColumn(colName, Long.class, false);
+				List<Long> newList = new ArrayList<Long>();
+				long[] temp = graphs.pos.get(contigName);
+				for (int i = 0; i < temp.length; i++)
+					newList.add(temp[i] / binSize);
+				table.getRow(network.getSUID()).set(colName, newList);
+				colNames.add(colName);
+			}
+			for (String contigName: graphs.rev.keySet()) {
+				colName = s + ":" + (contigName != null ? contigName : "unpaired") + ":" + "rev";
+				if (table.getColumn(colName) == null)
+					table.createListColumn(colName, Long.class, false);
+				List<Long> newList = new ArrayList<Long>();
+				long[] temp = graphs.rev.get(contigName);
+				for (int i = 0; i < temp.length; i++)
+					newList.add(-temp[i] / binSize);
+				table.getRow(network.getSUID()).set(colName, newList);
+				colNames.add(colName);
+			}
+			if (table.getColumn(s + ":graphColumns") == null)
+				table.createListColumn(s + ":graphColumns", String.class, false);
+			table.getRow(network.getSUID()).set(s + ":graphColumns", colNames);
+		}
+		if (table.getColumn("graphBinSize") == null)
+			table.createColumn("graphBinSize", Long.class, false);
+		table.getRow(network.getSUID()).set("graphBinSize", (long) binSize);
+	}
+
 	public void displayNetwork() {
 		CyNetworkManager networkManager = (CyNetworkManager) getService(CyNetworkManager.class);
 		networkManager.addNetwork(network);

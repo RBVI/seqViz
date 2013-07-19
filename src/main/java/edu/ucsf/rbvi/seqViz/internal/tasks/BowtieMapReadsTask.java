@@ -62,7 +62,7 @@ public class BowtieMapReadsTask extends AbstractMapReadsTask {
 		
 		contigs.displayBridgingReads();
 		contigs.createHist(200);
-		contigs.loadBpGraphs();
+		contigs.loadBpGraphs(50);
 		contigs.displayNetwork();
 	}
 

@@ -34,13 +34,13 @@ import edu.ucsf.rbvi.seqViz.internal.model.ComplementaryGraphs;
 import edu.ucsf.rbvi.seqViz.internal.model.Contig;
 import edu.ucsf.rbvi.seqViz.internal.model.ContigsManager;
 
-public class ContigView extends JPanel {
+public class ContigView {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -7713836441534331408L;
-	private JButton zoomIn, zoomOut, left, right;
+	private JButton zoomIn, zoomOut;
 	private JSplitPane splitPane;
 	private JScrollPane histoPane, settingsPane;
 	private JPanel histoPanel, zoomPane, settingsPanel;
@@ -48,7 +48,8 @@ public class ContigView extends JPanel {
 	private ContigsManager manager;
 	private Contig contig;
 	private ComplementaryGraphs graphs;
-	private long y_min = 0, y_max = 0;
+	private long y_min = 0, y_max = 0, contigLength = 0, binSize;
+	private int width = 800, height = 400, widthScale = 1, heightScale = 1;
 	
 /*	public ContigView(ContigsManager manager, String contig) {
 		this.manager = manager;
@@ -109,15 +110,17 @@ public class ContigView extends JPanel {
 		}
 	} */
 	
-	public ContigView(CyNetwork network, String contig) {
-		CyTable table = network.getDefaultNetworkTable();
-		long contigLength = 0;
+	public ContigView(CyNetwork network, Long suid) {
+		CyTable table = network.getDefaultNetworkTable(), nodeTable = network.getDefaultNodeTable();
+		String contig = nodeTable.getRow(suid).get(CyNetwork.NAME, String.class);
 		List<String> graphs = table.getRow(network.getSUID()).getList(contig + ":graphColumns", String.class);
-		JPanel[] graphColor = new JPanel[graphs.size()];
+	//	JPanel[] graphColor = new JPanel[graphs.size()];
+		binSize = table.getRow(network.getSUID()).get("graphBinSize", Long.class);
 		Random random = new Random(70);
+		contigLength = nodeTable.getRow(suid).get("length", Long.class);
 		for (String s: graphs) {
 			List<Long> graph = table.getRow(network.getSUID()).getList(s, Long.class);
-			contigLength = graph.size();
+		//	contigLength = graph.size() * binSize;
 			for (Long l: graph) {
 				if (l > 0) y_max = l > y_max ? l: y_max;
 				else y_min = l < y_min ? l: y_min;
@@ -127,7 +130,7 @@ public class ContigView extends JPanel {
 		settingsPanel = new JPanel();
 		settingsPanel.setLayout(new GridLayout(0, 3));
 
-		histoPanel2 = new HistoPanel(800, 400, 0, contigLength, y_min, y_max);
+		histoPanel2 = new HistoPanel(width, height, 0, contigLength, y_min, y_max);
 		int j = 0;
 		for (final String s: graphs) {
 			List<Long> graph = table.getRow(network.getSUID()).getList(s, Long.class);
@@ -135,7 +138,7 @@ public class ContigView extends JPanel {
 			int i = 0;
 			for (Long l: graph) {
 				y[i] = l;
-				x[i] = i + 1;
+				x[i] = i * binSize + 1;
 				i++;
 			}
 			final Color randomColor = new Color(((int) (random.nextFloat() * 4)) * 64, ((int) (random.nextFloat() * 4)) * 64, ((int) (random.nextFloat() * 4)) * 64);
@@ -183,13 +186,31 @@ public class ContigView extends JPanel {
 		histoPanel.add(zoomPane, BorderLayout.SOUTH);
 		histoPanel.add(histoPane, BorderLayout.CENTER);
 		zoomIn = new JButton("Zoom In");
+		zoomIn.addActionListener(new ActionListener() {
+			
+			public void actionPerformed(ActionEvent e) {
+				if (width * widthScale < contigLength) {
+					widthScale *= 2;
+					histoPanel2.setHistoPanelSize(width * widthScale, height * heightScale);
+					histoPanel2.repaint();
+					histoPane.revalidate();;
+				}
+			}
+		});
 		zoomOut = new JButton("Zoom Out");
-		left = new JButton("<<<");
-		right = new JButton(">>>");
-		zoomPane.add(left);
+		zoomOut.addActionListener(new ActionListener() {
+			
+			public void actionPerformed(ActionEvent e) {
+				if (widthScale > 1) {
+					widthScale /= 2;
+					histoPanel2.setHistoPanelSize(width * widthScale, height * heightScale);
+					histoPanel2.repaint();
+					histoPanel2.revalidate();
+				}
+			}
+		});
 		zoomPane.add(zoomIn);
 		zoomPane.add(zoomOut);
-		zoomPane.add(right);
 
 	//	for (int i = 0; i < graphColor.length; i++)
 	//		settingsPanel.add(graphColor[i]);
@@ -197,10 +218,10 @@ public class ContigView extends JPanel {
 		settingsPane.setMaximumSize(new Dimension(300,400));
 		
 		splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, histoPanel, settingsPane);
-		Dimension splitPaneSize = new Dimension(1100,400);
+		Dimension splitPaneSize = new Dimension(1200,500);
 		splitPane.setPreferredSize(splitPaneSize);
 		splitPane.setOneTouchExpandable(true);
-		setPreferredSize(splitPaneSize);
+	//	setPreferredSize(splitPaneSize);
 	}
 
 	public JSplitPane splitPane() {return splitPane;}
@@ -218,6 +239,26 @@ class HistoPanel extends JPanel {
 	private HashMap<String, Graphs> graphs;
 	
 	public HistoPanel(int width, int height, double x_min, double x_max, double y_min, double y_max) {
+	/*	this.setPreferredSize(new Dimension(width, height));
+		this.width = width;
+		this.height = height;
+		this.x_min = x_min;
+		this.x_max = x_max;
+		this.y_min = y_min;
+		this.y_max = y_max;
+		x_inc = (double) width / (x_max - x_min);
+		y_inc = (double) height / (y_max - y_min);
+		x_center = (int) (x_min * x_inc);
+		y_center = (int) (y_max * y_inc);
+		this.setBackground(Color.WHITE);
+		transform = new AffineTransform();
+		transform.translate(x_center, y_center);
+		transform.scale(x_inc, -y_inc); */
+		setHistoPanel(width, height, x_min, x_max, y_min, y_max);
+		graphs = new HashMap<String, Graphs>();
+	}
+	
+	private void setHistoPanel(int width, int height, double x_min, double x_max, double y_min, double y_max) {
 		this.setPreferredSize(new Dimension(width, height));
 		this.width = width;
 		this.height = height;
@@ -233,7 +274,10 @@ class HistoPanel extends JPanel {
 		transform = new AffineTransform();
 		transform.translate(x_center, y_center);
 		transform.scale(x_inc, -y_inc);
-		graphs = new HashMap<String, Graphs>();
+	}
+	
+	public void setHistoPanelSize(int width, int height) {
+		setHistoPanel(width, height, this.x_min, this.x_max, this.y_min, this.y_max);
 	}
 	
 	@Override
@@ -264,7 +308,7 @@ class HistoPanel extends JPanel {
 	
 	private void drawAxes(Graphics g) {
 		g.setColor(Color.BLACK);
-		g.setFont(new Font(Font.DIALOG, Font.PLAIN, 10));
+		g.setFont(new Font(Font.SERIF, Font.PLAIN, 10));
 		g.fillRect(x_center, y_center - 2, width, 4);
 		double x_step = 100;
 		double y_step = 50;
