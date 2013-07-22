@@ -496,10 +496,23 @@ public class ContigsManager {
 				if (covGraphs.containsKey(c))
 					covGraph = covGraphs.get(c);
 				else {
-					covGraph = new long[(contigs.get(contigName).sequence().length() / binSize) + 1];
+					if (contigs.get(contigName).sequence().length() % binSize != 0)
+						covGraph = new long[(contigs.get(contigName).sequence().length() / binSize) + 1];
+					else
+						covGraph = new long[(contigs.get(contigName).sequence().length() / binSize)];
 					covGraphs.put(c, covGraph);
 				}
-				covGraph[(read.locus() - 1) / binSize] += read.read().length();
+				int thisBin = (read.locus() - 1) / binSize;
+				int readLength = read.read().length(), offset = (read.locus() - 1) % binSize;
+				while (readLength > 0 && thisBin < covGraph.length) {
+					if (binSize - offset > readLength)
+						covGraph[thisBin] += binSize - offset;
+					else
+						covGraph[thisBin] += readLength;
+					readLength -= binSize - offset;
+					offset = 0;
+					thisBin++;
+				}
 			}
 		}
 		return y;
@@ -545,14 +558,21 @@ public class ContigsManager {
 			ArrayList<String> colNames = new ArrayList<String>();
 			ComplementaryGraphs graphs = createBpGraph(s, binSize);
 			String colName;
+			int lastBinSize = contigs.get(s).sequence().length() % binSize;
+			if (lastBinSize == 0)
+				lastBinSize = binSize;
 			for (String contigName: graphs.pos.keySet()) {
 				colName = s + ":" + (contigName != null ? contigName : "unpaired") + ":" + "pos";
 				if (table.getColumn(colName) == null)
 					table.createListColumn(colName, Long.class, false);
 				List<Long> newList = new ArrayList<Long>();
 				long[] temp = graphs.pos.get(contigName);
-				for (int i = 0; i < temp.length; i++)
-					newList.add(temp[i] / binSize);
+				for (int i = 0; i < temp.length; i++) {
+					if (i < temp.length - 1)
+						newList.add(temp[i] / binSize);
+					else
+						newList.add(temp[i] / lastBinSize);
+				}
 				table.getRow(network.getSUID()).set(colName, newList);
 				colNames.add(colName);
 			}
@@ -562,8 +582,12 @@ public class ContigsManager {
 					table.createListColumn(colName, Long.class, false);
 				List<Long> newList = new ArrayList<Long>();
 				long[] temp = graphs.rev.get(contigName);
-				for (int i = 0; i < temp.length; i++)
-					newList.add(-temp[i] / binSize);
+				for (int i = 0; i < temp.length; i++) {
+					if (i < temp.length - 1)
+						newList.add(-temp[i] / binSize);
+					else
+						newList.add(-temp[i] / lastBinSize);
+				}
 				table.getRow(network.getSUID()).set(colName, newList);
 				colNames.add(colName);
 			}
