@@ -562,7 +562,7 @@ public class ContigsManager {
 			if (lastBinSize == 0)
 				lastBinSize = binSize;
 			for (String contigName: graphs.pos.keySet()) {
-				colName = s + ":" + (contigName != null ? contigName : "unpaired") + ":" + "pos";
+				colName = s + ":" + (contigName != null ? contigName : "unpaired") + ":" + "+";
 				if (table.getColumn(colName) == null)
 					table.createListColumn(colName, Long.class, false);
 				List<Long> newList = new ArrayList<Long>();
@@ -577,7 +577,7 @@ public class ContigsManager {
 				colNames.add(colName);
 			}
 			for (String contigName: graphs.rev.keySet()) {
-				colName = s + ":" + (contigName != null ? contigName : "unpaired") + ":" + "rev";
+				colName = s + ":" + (contigName != null ? contigName : "unpaired") + ":" + "-";
 				if (table.getColumn(colName) == null)
 					table.createListColumn(colName, Long.class, false);
 				List<Long> newList = new ArrayList<Long>();
