@@ -155,12 +155,15 @@ public class ContigsManager {
 		CyTable table = network.getDefaultNodeTable();
 		if (table.getColumn("length") == null)
 			table.createColumn("length", Long.class, false);
+		if (table.getColumn("sequence") == null)
+			table.createColumn("sequence", String.class, false);
 		for (String s: contigs.keySet()) {
 			if (contigs.get(s).node == null) {
 				CyNode node = network.addNode();
 				contigs.get(s).node = node;
 				network.getRow(node).set(CyNetwork.NAME, s);
 				network.getRow(node).set("length", (long) contigs.get(s).sequence().length());
+				network.getRow(node).set("sequence", contigs.get(s).sequence());
 			}
 		}
 	}

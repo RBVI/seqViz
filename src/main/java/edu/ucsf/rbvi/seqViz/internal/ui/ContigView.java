@@ -10,11 +10,16 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +31,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -117,8 +123,10 @@ public class ContigView {
 	} */
 	
 	public ContigView(CyNetwork network, Long suid) {
+		final CyNetwork net = network;
+		final Long suid2 = suid;
 		CyTable table = network.getDefaultNetworkTable(), nodeTable = network.getDefaultNodeTable();
-		String contig = nodeTable.getRow(suid).get(CyNetwork.NAME, String.class);
+		final String contig = nodeTable.getRow(suid).get(CyNetwork.NAME, String.class);
 		List<String> graphs = table.getRow(network.getSUID()).getList(contig + ":graphColumns", String.class);
 	//	JPanel[] graphColor = new JPanel[graphs.size()];
 		SortedMap<String, JPanel> graphColor = new TreeMap<String, JPanel>();
@@ -139,7 +147,7 @@ public class ContigView {
 		settingsPanel = new JPanel();
 		settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.PAGE_AXIS));
 
-		histoPanel2 = new HistoPanel(width, height, 0, contigLength, y_min, y_max);
+		histoPanel2 = new HistoPanel(width, height, 1, contigLength, y_min, y_max);
 		int j = 0;
 		int labelLength = 0, tempLength;
 		for (String s: graphs)
@@ -304,149 +312,46 @@ public class ContigView {
 	//	splitPane.setPreferredSize(splitPaneSize);
 		splitPane.setOneTouchExpandable(true);
 	//	setPreferredSize(splitPaneSize);
+		histoPanel2.addMouseListener(new MouseListener() {
+			
+			public void mouseReleased(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			public void mousePressed(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			public void mouseExited(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			public void mouseEntered(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			public void mouseClicked(MouseEvent e) {
+				Point d = new Point(e.getX(), e.getY());
+				Point2D d2;
+				try {
+					d2 = histoPanel2.realCoordinates(d);
+					JPanel seqView = new SequenceView(net, suid2, (int) d2.getX() - 50, (int) d2.getX() + 50);
+					JFrame frame = new JFrame(contig);
+					frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+					frame.getContentPane().add(seqView);
+					frame.pack();
+					frame.setVisible(true);
+				} catch (NoninvertibleTransformException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			}
+		});
 	}
 
 	public JSplitPane splitPane() {return splitPane;}
-}
-
-class HistoPanel extends JPanel {
-
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -3604183601615232797L;
-	private int width, height, x_center, y_center;
-	private double x_inc, y_inc, x_min, x_max, y_min, y_max;
-	private AffineTransform transform;
-	private HashMap<String, Graphs> graphs;
-	
-	public HistoPanel(int width, int height, double x_min, double x_max, double y_min, double y_max) {
-	/*	this.setPreferredSize(new Dimension(width, height));
-		this.width = width;
-		this.height = height;
-		this.x_min = x_min;
-		this.x_max = x_max;
-		this.y_min = y_min;
-		this.y_max = y_max;
-		x_inc = (double) width / (x_max - x_min);
-		y_inc = (double) height / (y_max - y_min);
-		x_center = (int) (x_min * x_inc);
-		y_center = (int) (y_max * y_inc);
-		this.setBackground(Color.WHITE);
-		transform = new AffineTransform();
-		transform.translate(x_center, y_center);
-		transform.scale(x_inc, -y_inc); */
-		setHistoPanel(width, height, x_min, x_max, y_min, y_max);
-		graphs = new HashMap<String, Graphs>();
-	}
-	
-	private void setHistoPanel(int width, int height, double x_min, double x_max, double y_min, double y_max) {
-		this.setPreferredSize(new Dimension(width, height));
-		this.width = width;
-		this.height = height;
-		this.x_min = x_min;
-		this.x_max = x_max;
-		this.y_min = y_min;
-		this.y_max = y_max;
-		x_inc = (double) width / (x_max - x_min);
-		y_inc = (double) height / (y_max - y_min);
-		x_center = (int) (x_min * x_inc);
-		y_center = (int) (y_max * y_inc);
-		this.setBackground(Color.WHITE);
-		transform = new AffineTransform();
-		transform.translate(x_center, y_center);
-		transform.scale(x_inc, -y_inc);
-	}
-	
-	public void setHistoPanelSize(int width, int height) {
-		setHistoPanel(width, height, this.x_min, this.x_max, this.y_min, this.y_max);
-	}
-	
-	@Override
-	protected void paintComponent(Graphics g) {
-		super.paintComponent(g);
-		drawAxes(g);
-		for (Graphs graph: graphs.values())
-			if (graph.draw) drawLineGraph(g, graph.points, graph.color);
-	}
-	
-	public void addGraph(String name, Color c, double[] x, double[] y) {
-		graphs.put(name, new Graphs(c, x, y));
-	}
-	
-	public void changeColor(String name, Color c) {
-		if (graphs.containsKey(name)) {
-			Graphs g = graphs.get(name);
-			g.color = c;
-		}
-	}
-	
-	public void setGraphVisible(String name, boolean display) {
-		if (graphs.containsKey(name)) {
-			Graphs g = graphs.get(name);
-			g.draw = display;
-		}
-	}
-	
-	private void drawAxes(Graphics g) {
-		g.setColor(Color.BLACK);
-		g.setFont(new Font(Font.SERIF, Font.PLAIN, 10));
-		g.fillRect(x_center, y_center - 2, width, 4);
-		double x_step = 100;
-		double y_step = 50;
-		for (double j = x_center; j < width; j += x_step) {
-			int i = (int) j;
-			g.drawString(String.format("%.1f", i / x_inc), i, y_center - 5);
-			g.drawLine(i, y_center - 5, i, y_center + 5);
-		}
-		for (int j = x_center; j > 0; j -= x_step) {
-			int i = (int) j;
-			g.drawString(String.format("%.1f", i / x_inc), i, y_center - 5);
-			g.drawLine(i, y_center - 5, i, y_center + 5);
-		}
-		for (int j = y_center; j > 0; j -= y_step) {
-			int i = (int) j;
-			g.drawString(String.format("%.1f", (y_center - i) / y_inc), x_center, i);
-			g.drawLine(x_center, i, width, i);
-		}
-		for (int j = y_center; j < height; j += y_step) {
-			int i = (int) j;
-			g.drawString(String.format("%.1f", (y_center - i) / y_inc), x_center, i);
-			g.drawLine(x_center, i, width, i);
-		}
-	}
-	
-	private void drawLineGraph(Graphics g, double[] xy, Color c) {
-		g.setColor(c);
-		Graphics2D g2 = (Graphics2D) g;
-		g2.setStroke(new BasicStroke(2));
-		double[] final_coordinates = new double[xy.length];
-		transform.transform(xy, 0, final_coordinates, 0, xy.length/2);
-		for (int i = 0; i < final_coordinates.length - 2; i += 2) {
-			g2.drawLine((int) final_coordinates[i], (int) final_coordinates[i+1], (int) final_coordinates[i+2], (int) final_coordinates[i+3]);
-		}
-	}
-	
-	private class Graphs {
-		public boolean draw;
-		public Color color;
-		public double[] points;
-		public Graphs(Color c, double[] p) {
-			draw = true;
-			color = c;
-			points = p;
-		}
-		public Graphs(Color c, double[] x, double[] y) {
-			draw = true;
-			color = c;
-			if (x.length == y.length) {
-				double[] xy = new double[x.length + y.length];
-				for (int i = 0; i < x.length; i++) {
-					xy[2 * i] = x[i];
-					xy[2 * i + 1] = y[i];
-				}
-				points = xy;
-			}
-		}
-	}
 }
