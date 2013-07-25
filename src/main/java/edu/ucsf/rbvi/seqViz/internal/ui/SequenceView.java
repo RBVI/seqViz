@@ -112,7 +112,7 @@ public class SequenceView extends JPanel {
 	private void updateGraph() {
 		int beg = (int) (minPos / binSize), end = (int) (maxPos / binSize);
 		if (beg > 0) beg--;
-		if (end < (contigLength / binSize) + (contigLength % binSize == 0 ? 0: 1)) end++;
+		if (end + 1 < (contigLength / binSize) + (contigLength % binSize == 0 ? 0: 1)) end++;
 		Random random = new Random(70);
 		for (final String s: graphs) {
 			List<Long> graph = table.getRow(network.getSUID()).getList(s, Long.class);
