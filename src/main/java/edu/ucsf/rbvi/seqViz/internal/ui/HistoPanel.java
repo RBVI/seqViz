@@ -8,6 +8,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
@@ -21,7 +22,8 @@ public class HistoPanel extends JPanel {
 	 * 
 	 */
 	private static final long serialVersionUID = -3604183601615232797L;
-	private int width, height, x_center, y_center;
+	private boolean drawYLine = false;
+	private int width, height, x_center, y_center, begLine, endLine;
 	private Integer beg = null, end = null;
 	private double x_inc, y_inc, x_min, x_max, y_min, y_max;
 	private AffineTransform transform;
@@ -81,13 +83,44 @@ public class HistoPanel extends JPanel {
 		return transform.inverseTransform(d, temp);
 	}
 	
+	public Point2D cartesianCoordinates(Point2D d) {
+		Point2D temp = new Point2D() {
+			private double x = 0, y = 0;
+			@Override
+			public void setLocation(double x, double y) {
+				// TODO Auto-generated method stub
+				this.x = x;
+				this.y = y;
+			}
+			
+			@Override
+			public double getY() {
+				// TODO Auto-generated method stub
+				return y;
+			}
+			
+			@Override
+			public double getX() {
+				// TODO Auto-generated method stub
+				return x;
+			}
+		};
+		return transform.transform(d, temp);
+	}
+	
 	@Override
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
+		AntiAlias.antiAliasing((Graphics2D) g);
 		drawAxes(g);
 		if (seq != null) drawSequence(g);
 		for (Graphs graph: graphs.values())
 			if (graph.draw) drawLineGraph(g, graph.points, graph.color);
+		if (drawYLine) {
+			g.setColor(Color.BLACK);
+			g.drawLine(begLine, 0, begLine, this.getHeight());
+			g.drawLine(endLine, 0, endLine, this.getHeight());
+		}
 	}
 	
 	public void addSequence(String sequence, Font font, int beg, int end) {
@@ -115,6 +148,18 @@ public class HistoPanel extends JPanel {
 			Graphs g = graphs.get(name);
 			g.draw = display;
 		}
+	}
+	
+	public void setBegLine(int beg) {
+		begLine = beg;
+	}
+	
+	public void setEndLine(int end) {
+		endLine = end;
+	}
+	
+	public void setDrawYLines(boolean b) {
+		drawYLine = b;
 	}
 	
 	private void drawAxes(Graphics g) {

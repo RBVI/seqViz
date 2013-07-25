@@ -17,6 +17,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
@@ -61,7 +62,7 @@ public class ContigView {
 	private Contig contig;
 	private ComplementaryGraphs graphs;
 	private long y_min = 0, y_max = 0, contigLength = 0, binSize;
-	private int width = 800, height = 400, widthScale = 1, heightScale = 1;
+	private int width = 800, height = 400, widthScale = 1, heightScale = 1, begLine, endLine;
 	
 /*	public ContigView(ContigsManager manager, String contig) {
 		this.manager = manager;
@@ -315,13 +316,31 @@ public class ContigView {
 		histoPanel2.addMouseListener(new MouseListener() {
 			
 			public void mouseReleased(MouseEvent e) {
-				// TODO Auto-generated method stub
-				
+				histoPanel2.setDrawYLines(false);
+				if (begLine < endLine) {
+					Point d = new Point(begLine, 0);
+					Point d2 = new Point(endLine, 0);
+					try {
+						Point2D p = histoPanel2.realCoordinates(d),
+								p2 = histoPanel2.realCoordinates(d2);
+						JPanel seqView = new SequenceView(net, suid2, (int) p.getX(), (int) p2.getX() + 50);
+						JFrame frame = new JFrame(contig);
+						frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+						frame.getContentPane().add(seqView);
+						frame.pack();
+						frame.setVisible(true);
+					} catch (NoninvertibleTransformException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+				}
 			}
 			
 			public void mousePressed(MouseEvent e) {
-				// TODO Auto-generated method stub
-				
+				histoPanel2.setBegLine(begLine = e.getX());
+				histoPanel2.setEndLine(endLine = e.getX());
+				histoPanel2.setDrawYLines(true);
+				histoPanel2.repaint();
 			}
 			
 			public void mouseExited(MouseEvent e) {
@@ -335,7 +354,7 @@ public class ContigView {
 			}
 			
 			public void mouseClicked(MouseEvent e) {
-				Point d = new Point(e.getX(), e.getY());
+			/*	Point d = new Point(e.getX(), e.getY());
 				Point2D d2;
 				try {
 					d2 = histoPanel2.realCoordinates(d);
@@ -348,7 +367,24 @@ public class ContigView {
 				} catch (NoninvertibleTransformException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
-				}
+				} */
+			}
+		});
+		histoPanel2.addMouseMotionListener(new MouseMotionListener() {
+			
+			public void mouseMoved(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			public void mouseDragged(MouseEvent e) {
+				histoPanel2.setEndLine(endLine = e.getX());
+				Point2D p = histoPanel2.cartesianCoordinates(new Point(0, 0)),
+						p2 = histoPanel2.cartesianCoordinates(new Point(100, 0));
+				int diff = (int) (p2.getX() - p.getX());
+				if (begLine + diff <= endLine)
+					histoPanel2.setBegLine(begLine = (endLine - diff));
+				histoPanel2.repaint();
 			}
 		});
 	}

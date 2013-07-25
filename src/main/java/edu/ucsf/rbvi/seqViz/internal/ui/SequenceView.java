@@ -6,6 +6,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.util.List;
@@ -110,6 +111,7 @@ public class SequenceView extends JPanel {
 		@Override
 		protected void paintComponent(Graphics g) {
 			super.paintComponent(g);
+		//	AntiAlias.antiAliasing((Graphics2D) g);
 			g.setColor(Color.BLACK);
 			FontMetrics metrics = g.getFontMetrics();
 			g.drawString(seq, 0, metrics.getAscent());
