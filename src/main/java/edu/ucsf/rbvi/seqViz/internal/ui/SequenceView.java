@@ -33,13 +33,21 @@ public class SequenceView extends JPanel {
 	private Font seqFont;
 	private FontMetrics textMetrics;
 	private long y_min = 0, y_max = 0, contigLength, binSize;
+	private int minPos, maxPos;
+	private CyTable table, nodeTable;
+	private List<String> graphs;
+	private CyNetwork network;
 	
 	public SequenceView(CyNetwork network, Long suid, int minPos, int maxPos) {
 		minPos--;
 		maxPos--;
-		CyTable table = network.getDefaultNetworkTable(), nodeTable = network.getDefaultNodeTable();
+		this.minPos = minPos;
+		this.maxPos = maxPos;
+		this.network = network;
+		table = network.getDefaultNetworkTable();
+		nodeTable = network.getDefaultNodeTable();
 		final String contig = nodeTable.getRow(suid).get(CyNetwork.NAME, String.class);
-		List<String> graphs = table.getRow(network.getSUID()).getList(contig + ":graphColumns", String.class);
+		graphs = table.getRow(network.getSUID()).getList(contig + ":graphColumns", String.class);
 		contigLength = nodeTable.getRow(suid).get("length", Long.class);
 		binSize = table.getRow(network.getSUID()).get("graphBinSize", Long.class);
 		Random random = new Random(70);
@@ -52,17 +60,10 @@ public class SequenceView extends JPanel {
 		}
 		
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-		scrollBar = new JScrollBar(JScrollBar.HORIZONTAL);
-		scrollBar.addAdjustmentListener(new AdjustmentListener() {
-			
-			public void adjustmentValueChanged(AdjustmentEvent e) {
-				
-			}
-		});
 		sequence = nodeTable.getRow(suid).get("sequence", String.class);
 		windowSeq = sequence.substring(minPos, maxPos);
 		seqFont = new Font(Font.MONOSPACED, Font.PLAIN, 12);
-		seqPanel = new SequencePanel(windowSeq);
+		seqPanel = new SequencePanel(sequence, minPos, maxPos);
 		
 		seqPanel.setFont(seqFont);
 		textMetrics = seqPanel.getFontMetrics(seqFont);
@@ -72,9 +73,21 @@ public class SequenceView extends JPanel {
 		add(seqViewUp);
 		add(seqPanel);
 		add(seqViewDown);
+		
+		scrollBar = new JScrollBar(JScrollBar.HORIZONTAL, minPos, 0, 0, sequence.length() - (maxPos - minPos + 1));
+		scrollBar.addAdjustmentListener(new AdjustmentListener() {
+			
+			public void adjustmentValueChanged(AdjustmentEvent e) {
+				SequenceView.this.maxPos = e.getValue() + (SequenceView.this.maxPos - SequenceView.this.minPos);
+				SequenceView.this.minPos = e.getValue();
+				updateGraph();
+				repaint();
+			}
+		});
 		add(scrollBar);
 		
-		int beg = (int) (minPos / binSize), end = (int) (maxPos / binSize);
+		updateGraph();
+	/*	int beg = (int) (minPos / binSize), end = (int) (maxPos / binSize);
 		if (beg > 0) beg--;
 		if (end < (contigLength / binSize) + (contigLength % binSize == 0 ? 0: 1)) end++;
 		for (final String s: graphs) {
@@ -93,7 +106,34 @@ public class SequenceView extends JPanel {
 				seqViewUp.addGraph(s, randomColor, x, y);
 			if (s.split(":")[2].equals("-"))
 				seqViewDown.addGraph(s, randomColor, x, y);
+		} */
+	}
+	
+	private void updateGraph() {
+		int beg = (int) (minPos / binSize), end = (int) (maxPos / binSize);
+		if (beg > 0) beg--;
+		if (end < (contigLength / binSize) + (contigLength % binSize == 0 ? 0: 1)) end++;
+		Random random = new Random(70);
+		for (final String s: graphs) {
+			List<Long> graph = table.getRow(network.getSUID()).getList(s, Long.class);
+			double[] y = new double[end - beg + 1], x = new double[end - beg + 1];
+			int i = 0;
+			for (Long l: graph) {
+				if (beg <= i && i <= end) {
+					y[i-beg] = l;
+					x[i-beg] = i * binSize + 1;
+				}
+				i++;
+			}
+			final Color randomColor = new Color(((int) (random.nextFloat() * 4)) * 64, ((int) (random.nextFloat() * 4)) * 64, ((int) (random.nextFloat() * 4)) * 64);
+			if (s.split(":")[2].equals("+"))
+				seqViewUp.addGraph(s, randomColor, x, y);
+			if (s.split(":")[2].equals("-"))
+				seqViewDown.addGraph(s, randomColor, x, y);
 		}
+		seqPanel.changeWindow(minPos, maxPos);
+		seqViewUp.setHistoPanelSize(minPos+1, maxPos+1, 0, (int) y_max);
+		seqViewDown.setHistoPanelSize(minPos+1, maxPos+1, (int) y_min, 0);
 	}
 	
 	private class SequencePanel extends JPanel {
@@ -102,19 +142,42 @@ public class SequenceView extends JPanel {
 		 */
 		private static final long serialVersionUID = -3536609604942989080L;
 		private String seq;
+		private int beg, end;
 		
-		public SequencePanel(String s) {
+		public SequencePanel(String s, int beg, int end) {
 			seq = s;
+			this.beg = beg;
+			this.end = end;
 			setBackground(Color.WHITE);
 		}
 		
+		public void changeWindow(int beg, int end) {
+			this.beg = beg;
+			this.end = end;
+		}
 		@Override
 		protected void paintComponent(Graphics g) {
 			super.paintComponent(g);
-		//	AntiAlias.antiAliasing((Graphics2D) g);
-			g.setColor(Color.BLACK);
+			String windowSeq = seq.substring(beg, end);
+			int width = this.getWidth();
+			double inc = (double) width / (double) windowSeq.length();
+			AntiAlias.antiAliasing((Graphics2D) g);
 			FontMetrics metrics = g.getFontMetrics();
-			g.drawString(seq, 0, metrics.getAscent());
+			for (int i = 0; i < windowSeq.length(); i++) {
+				switch (windowSeq.charAt(i)) {
+					case 'A': g.setColor(Color.GREEN); break;
+					case 'T': g.setColor(Color.RED); break;
+					case 'C': g.setColor(Color.BLUE); break;
+					case 'G': g.setColor(Color.BLACK); break;
+					case 'a': g.setColor(Color.GREEN); break;
+					case 't': g.setColor(Color.RED); break;
+					case 'c': g.setColor(Color.BLUE); break;
+					case 'g': g.setColor(Color.BLACK); break;
+					default: g.setColor(Color.GRAY); break;
+				}
+				char[] character = {windowSeq.charAt(i)};
+				g.drawString(new String(character), (int) (i * inc), metrics.getAscent());
+			}
 		}
 	}
 }

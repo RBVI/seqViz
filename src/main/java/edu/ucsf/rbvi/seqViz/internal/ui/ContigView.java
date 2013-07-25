@@ -323,7 +323,7 @@ public class ContigView {
 					try {
 						Point2D p = histoPanel2.realCoordinates(d),
 								p2 = histoPanel2.realCoordinates(d2);
-						JPanel seqView = new SequenceView(net, suid2, (int) p.getX(), (int) p2.getX() + 50);
+						JPanel seqView = new SequenceView(net, suid2, (int) p.getX(), (int) p2.getX());
 						JFrame frame = new JFrame(contig);
 						frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 						frame.getContentPane().add(seqView);
@@ -334,6 +334,7 @@ public class ContigView {
 						e1.printStackTrace();
 					}
 				}
+				histoPanel2.repaint();
 			}
 			
 			public void mousePressed(MouseEvent e) {
@@ -380,7 +381,7 @@ public class ContigView {
 			public void mouseDragged(MouseEvent e) {
 				histoPanel2.setEndLine(endLine = e.getX());
 				Point2D p = histoPanel2.cartesianCoordinates(new Point(0, 0)),
-						p2 = histoPanel2.cartesianCoordinates(new Point(100, 0));
+						p2 = histoPanel2.cartesianCoordinates(new Point(200, 0));
 				int diff = (int) (p2.getX() - p.getX());
 				if (begLine + diff <= endLine)
 					histoPanel2.setBegLine(begLine = (endLine - diff));

@@ -58,6 +58,9 @@ public class HistoPanel extends JPanel {
 		setHistoPanel(width, height, this.x_min, this.x_max, this.y_min, this.y_max);
 	}
 	
+	public void setHistoPanelSize(int x_min, int x_max, int y_min, int y_max) {
+		setHistoPanel(this.width, this.height, x_min, x_max, y_min, y_max);
+	}
 	public Point2D realCoordinates(Point2D d) throws NoninvertibleTransformException {
 		Point2D temp = new Point2D() {
 			private double x = 0, y = 0;
