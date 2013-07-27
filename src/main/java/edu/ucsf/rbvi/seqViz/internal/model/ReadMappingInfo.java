@@ -3,7 +3,7 @@ package edu.ucsf.rbvi.seqViz.internal.model;
 public class ReadMappingInfo {
 	
 	private Read read;
-	private int score;
+//	private int score;
 	private int locus;
 	private boolean strand;
 	private boolean sameContig;
@@ -20,7 +20,7 @@ public class ReadMappingInfo {
 	 */
 	public ReadMappingInfo(Read read, int score, int locus, boolean strand, boolean sameContig) {
 		this.read = read;
-		this.score = score;
+//		this.score = score;
 		this.locus = locus;
 		this.strand = strand;
 		this.sameContig = sameContig;
@@ -38,7 +38,7 @@ public class ReadMappingInfo {
 	 * 
 	 * @return alignment score of the read with the reference sequence
 	 */
-	public int score() {return score;}
+//	public int score() {return score;}
 	
 	/**
 	 * Position of the mapped read on the reference sequence

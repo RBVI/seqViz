@@ -5,7 +5,7 @@ public class Read {
 	private boolean pair; // mate-pair indicator
 	private int length; // length of read
 	private String name; // name of read
-	private String sequence; // nucleotide sequence of read
+//	private String sequence; // nucleotide sequence of read
 
 	/**
  	 * This constructor the read object, which stores information about the read.
@@ -19,7 +19,7 @@ public class Read {
 		this.name = name;
 		this.pair = pair;
 		this.length = length;
-		this.sequence = sequence;
+	//	this.sequence = sequence;
 	}
 	
 	/**
@@ -48,5 +48,5 @@ public class Read {
 	 * 
 	 * @return nucleotide sequence of the read
 	 */
-	public String sequence() {return sequence;}
+//	public String sequence() {return sequence;}
 }
