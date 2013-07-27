@@ -4,7 +4,7 @@ public class Read {
 	
 	private boolean pair; // mate-pair indicator
 	private int length; // length of read
-	private String name; // name of read
+	private long name; // name of read
 //	private String sequence; // nucleotide sequence of read
 
 	/**
@@ -15,7 +15,7 @@ public class Read {
  	 * @param length length of the read
  	 * @param sequence nucleotide sequence of the read
  	 */
-	public Read(String name, boolean pair, int length, String sequence) {
+	public Read(long name, boolean pair, int length, String sequence) {
 		this.name = name;
 		this.pair = pair;
 		this.length = length;
@@ -27,7 +27,7 @@ public class Read {
 	 * 
 	 * @return name of the read
 	 */
-	public String name() {return name;}
+	public long name() {return name;}
 	
 	/**
 	 * Return the mate-pair information of read

@@ -36,7 +36,7 @@ import edu.ucsf.rbvi.seqViz.internal.CyActivator;
  */
 public class ContigsManager {
 	
-	private HashMap<String, ReadPair> readPairs;
+	private HashMap<Long, ReadPair> readPairs;
 	private HashMap<String,Contig> contigs;
 	private SeqVizSettings settings;
 	private CyNetwork network;
@@ -46,7 +46,7 @@ public class ContigsManager {
 	
 	public ContigsManager(BundleContext bc, VisualStyle vs) {
 		contigs = new HashMap<String, Contig>();
-		readPairs = new HashMap<String, ReadPair>();
+		readPairs = new HashMap<Long, ReadPair>();
 		bundleContext = bc;
 		this.vs = vs;
 		CyNetworkFactory networkFactory = (CyNetworkFactory) getService(CyNetworkFactory.class);
@@ -56,7 +56,7 @@ public class ContigsManager {
 
 	public ContigsManager(BundleContext bc, CyNetwork curNetwork, VisualStyle vs) {
 		contigs = new HashMap<String, Contig>();
-		readPairs = new HashMap<String, ReadPair>();
+		readPairs = new HashMap<Long, ReadPair>();
 		bundleContext = bc;
 		this.vs = vs;
 		this.network = curNetwork;
