@@ -37,6 +37,7 @@ import edu.ucsf.rbvi.seqViz.internal.CyActivator;
 public class ContigsManager {
 	
 	private HashMap<Long, ReadPair> readPairs;
+	private List<ReadPair> readPairList;
 	private HashMap<String,Contig> contigs;
 	private SeqVizSettings settings;
 	private CyNetwork network;
@@ -47,6 +48,7 @@ public class ContigsManager {
 	public ContigsManager(BundleContext bc, VisualStyle vs) {
 		contigs = new HashMap<String, Contig>();
 		readPairs = new HashMap<Long, ReadPair>();
+		readPairList = new ArrayList<ReadPair>();
 		bundleContext = bc;
 		this.vs = vs;
 		CyNetworkFactory networkFactory = (CyNetworkFactory) getService(CyNetworkFactory.class);
@@ -57,6 +59,7 @@ public class ContigsManager {
 	public ContigsManager(BundleContext bc, CyNetwork curNetwork, VisualStyle vs) {
 		contigs = new HashMap<String, Contig>();
 		readPairs = new HashMap<Long, ReadPair>();
+		readPairList = new ArrayList<ReadPair>();
 		bundleContext = bc;
 		this.vs = vs;
 		this.network = curNetwork;
@@ -144,6 +147,19 @@ public class ContigsManager {
 		thisPair.addReadMappingInfo(contigName, readInfo);
 	}
 	
+	public void addRead(HashMap<String, List<ReadMappingInfo>> readBundle) throws Exception {
+		ReadPair thisPair = new ReadPair();
+		for (String contigName: readBundle.keySet()) {
+			Contig contig = contigs.get(contigName);
+			if (contig == null) throw new Exception("Cannot add new read, contig " + contigName + " does not exist.");
+			for (ReadMappingInfo readInfo: readBundle.get(contigName)) {
+				contig.addReadMappingInfo(readInfo);
+				thisPair.addReadMappingInfo(contigName, readInfo);
+			}
+		}
+		readPairList.add(thisPair);
+	}
+
 	public Contig getContig(String name) {
 		return contigs.get(name);
 	}

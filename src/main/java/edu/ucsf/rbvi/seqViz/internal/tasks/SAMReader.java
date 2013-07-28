@@ -63,13 +63,11 @@ public class SAMReader extends AbstractMapOutputReader {
 						if (read1 == null)
 							read1 = new Read(counter, true, seq.length(), null);
 						contigs.addRead(contig, new ReadMappingInfo(read1, score, locus, !reverse, sameContig));
-					//	contigs.addRead(contig, read1, score, locus, !reverse);
 					}
 					if (mate2) {
 						if (read2 == null)
 							read2 = new Read(counter, false, seq.length(), null);
 						contigs.addRead(contig, new ReadMappingInfo(read2, score, locus, !reverse, sameContig));
-					//	contigs.addRead(contig, read2, score, locus, !reverse);
 					}
 				}
 				prevReadName = readName;

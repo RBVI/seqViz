@@ -2,17 +2,20 @@ package edu.ucsf.rbvi.seqViz.internal.model;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class ReadPair {
 	
-	private HashMap<String, List<ReadMappingInfo>> mate1;
-	private HashMap<String, List<ReadMappingInfo>> mate2;
+/*	private HashMap<String, List<ReadMappingInfo>> mate1;
+	private HashMap<String, List<ReadMappingInfo>> mate2; */
+	private HashMap<String, List<ReadMappingInfo>> readInfo;
 	
 	public ReadPair() {
-		this.mate1 = null;
-		this.mate2 = null;
+	/*	this.mate1 = null;
+		this.mate2 = null; */
+		readInfo = new HashMap<String, List<ReadMappingInfo>>();
 	}
 	
 	/**
@@ -22,7 +25,14 @@ public class ReadPair {
 	 * @param mappingInfo mapping information for the read
 	 */
 	public void addReadMappingInfo(String contig, ReadMappingInfo mappingInfo) {
-		HashMap<String, List<ReadMappingInfo>> thisMap;
+		List<ReadMappingInfo> theseReads;
+		if (readInfo.get(contig) != null)
+			theseReads = readInfo.get(contig);
+		else
+			theseReads = new ArrayList<ReadMappingInfo>();
+		theseReads.add(mappingInfo);
+		readInfo.put(contig, theseReads);
+	/*	HashMap<String, List<ReadMappingInfo>> thisMap;
 		if (mappingInfo.read().pair()) {
 			if (mate1 != null)
 				thisMap = mate1;
@@ -46,7 +56,7 @@ public class ReadPair {
 			List<ReadMappingInfo> thisList = new ArrayList<ReadMappingInfo>();
 			thisList.add(mappingInfo);
 			thisMap.put(contig, thisList);
-		}
+		} */
 	}
 	
 	/**
@@ -54,9 +64,19 @@ public class ReadPair {
 	 * @return Names of the contigs the read maps to
 	 */
 	public Set<String> getMate1Contigs() {
-		if (mate1 != null)
+		HashSet<String> result = null;
+		for (String s: readInfo.keySet())
+			for (ReadMappingInfo r: readInfo.get(s)) {
+				if (r.read().pair()) {
+					if (result == null)
+						result = new HashSet<String>();
+					result.add(s);
+				}
+			}
+		return result;
+	/*	if (mate1 != null)
 			return mate1.keySet();
-		else return null;
+		else return null; */
 	}
 	
 	/**
@@ -64,9 +84,19 @@ public class ReadPair {
 	 * @return Names of the contigs the read maps to
 	 */
 	public Set<String> getMate2Contigs() {
-		if (mate2 != null)
+		HashSet<String> result = null;
+		for (String s: readInfo.keySet())
+			for (ReadMappingInfo r: readInfo.get(s)) {
+				if (! r.read().pair()) {
+					if (result == null)
+						result = new HashSet<String>();
+					result.add(s);
+				}
+			}
+		return result;
+	/*	if (mate2 != null)
 			return mate2.keySet();
-		else return null;
+		else return null; */
 	}
 	
 	/**
@@ -74,9 +104,16 @@ public class ReadPair {
 	 * @return A Set of positions and other information mate #1 maps to
 	 */
 	public List<ReadMappingInfo> getReadMappingInfoMate1(String contig) {
-		if (mate1 != null)
+		List<ReadMappingInfo> temp = readInfo.get(contig), result = null;
+		for (ReadMappingInfo r: temp)
+			if (r.read().pair()) {
+				if (result == null) result = new ArrayList<ReadMappingInfo>();
+				result.add(r);
+			}
+		return result;
+	/*	if (mate1 != null)
 			return mate1.get(contig);
-		else return null;
+		else return null; */
 	}
 	
 	/**
@@ -84,9 +121,16 @@ public class ReadPair {
 	 * @return A Set of positions and other information mate #2 maps to
 	 */
 	public List<ReadMappingInfo> getReadMappingInfoMate2(String contig) {
-		if (mate1 != null)
+		List<ReadMappingInfo> temp = readInfo.get(contig), result = null;
+		for (ReadMappingInfo r: temp)
+			if (! r.read().pair()) {
+				if (result == null) result = new ArrayList<ReadMappingInfo>();
+				result.add(r);
+			}
+		return result;
+	/*	if (mate1 != null)
 			return mate2.get(contig);
-		else return null;
+		else return null; */
 	}
 	
 	/**

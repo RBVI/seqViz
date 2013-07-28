@@ -2,6 +2,7 @@ package edu.ucsf.rbvi.seqViz.internal.model;
 
 public class Read {
 	
+	private static int PAIRED_MASK = 0x80000000, LENGTH_MASK = 0x7FFFFFFF;
 	private boolean pair; // mate-pair indicator
 	private int length; // length of read
 	private long name; // name of read
