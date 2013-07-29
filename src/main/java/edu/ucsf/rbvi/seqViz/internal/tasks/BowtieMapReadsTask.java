@@ -60,9 +60,12 @@ public class BowtieMapReadsTask extends AbstractMapReadsTask {
 			indexFile.delete();
 		}
 		
-		contigs.displayBridgingReads();
-		contigs.createHist(200);
-		contigs.loadBpGraphs(50);
+	//	contigs.displayBridgingReads();
+	//	contigs.createHist(200);
+	//	contigs.loadBpGraphs(50);
+		contigs.saveBpGraphs();
+		contigs.saveBridgingReads();
+		contigs.saveHist();
 		contigs.displayNetwork();
 		System.gc();
 	}

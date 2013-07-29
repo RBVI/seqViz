@@ -4,13 +4,16 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import org.cytoscape.work.TaskMonitor;
 
 import edu.ucsf.rbvi.seqViz.internal.model.ContigsManager;
 import edu.ucsf.rbvi.seqViz.internal.model.Read;
 import edu.ucsf.rbvi.seqViz.internal.model.ReadMappingInfo;
+import edu.ucsf.rbvi.seqViz.internal.model.ReadPair;
 
 public class SAMReader extends AbstractMapOutputReader {
 
@@ -27,6 +30,7 @@ public class SAMReader extends AbstractMapOutputReader {
 		String line, readName = null, prevReadName = null;
 		long counter = 0;
 		Read read1 = null, read2 = null;
+		HashMap<String, List<ReadMappingInfo>> readBundle = null;
 		while ((line = reader.readLine()) != null) {
 			String[] fields = line.split("\t");
 			if (fields.length >= 11) {
@@ -56,18 +60,32 @@ public class SAMReader extends AbstractMapOutputReader {
 				if (prevReadName == null || ! readName.equals(prevReadName)) {
 					read1 = null;
 					read2 = null;
+					if (readBundle != null) contigs.addRead(readBundle);
+					readBundle = new HashMap<String, List<ReadMappingInfo>>();
 				}
 				if (aligned && ! (sameContig && contigs.getSettings().loadBridingReads)) {
 					if (contigs == null) throw new Exception("ContigManager not initialized.");
 					if (mate1) {
 						if (read1 == null)
 							read1 = new Read(counter, true, seq.length(), null);
-						contigs.addRead(contig, new ReadMappingInfo(read1, score, locus, !reverse, sameContig));
+						List<ReadMappingInfo> temp = readBundle.get(contig);
+						if (temp == null) {
+							temp = new ArrayList<ReadMappingInfo>();
+							readBundle.put(contig, temp);
+						}
+						temp.add(new ReadMappingInfo(read1, score, locus, !reverse, sameContig));
+					//	contigs.addRead(contig, new ReadMappingInfo(read1, score, locus, !reverse, sameContig));
 					}
 					if (mate2) {
 						if (read2 == null)
 							read2 = new Read(counter, false, seq.length(), null);
-						contigs.addRead(contig, new ReadMappingInfo(read2, score, locus, !reverse, sameContig));
+						List<ReadMappingInfo> temp = readBundle.get(contig);
+						if (temp == null) {
+							temp = new ArrayList<ReadMappingInfo>();
+							readBundle.put(contig, temp);
+						}
+						temp.add(new ReadMappingInfo(read2, score, locus, !reverse, sameContig));
+					//	contigs.addRead(contig, new ReadMappingInfo(read2, score, locus, !reverse, sameContig));
 					}
 				}
 				prevReadName = readName;
@@ -75,6 +93,8 @@ public class SAMReader extends AbstractMapOutputReader {
 			if (counter % 10000 == 1)
 				monitor.setProgress((double) counter / (double) reads);
 		}
+		if (readBundle != null) contigs.addRead(readBundle);
+		readBundle = new HashMap<String, List<ReadMappingInfo>>();
 	}
 
 }

@@ -2,11 +2,13 @@ package edu.ucsf.rbvi.seqViz.internal.model;
 
 public class ReadMappingInfo {
 	
+	private static byte STRAND = 0x01, SAME_CONTIG = 0x02;
 	private Read read;
 //	private int score;
 	private int locus;
-	private boolean strand;
-	private boolean sameContig;
+//	private boolean strand;
+//	private boolean sameContig;
+	private byte flags;
 	
 	/**
 	 * ReadMappingInfo stores information gained when mapping reads to the reference sequence
@@ -22,8 +24,11 @@ public class ReadMappingInfo {
 		this.read = read;
 //		this.score = score;
 		this.locus = locus;
-		this.strand = strand;
-		this.sameContig = sameContig;
+		flags = 0x00;
+		if (strand) flags = (byte) (flags | STRAND);
+		if (sameContig) flags = (byte) (flags | SAME_CONTIG);
+//		this.strand = strand;
+//		this.sameContig = sameContig;
 	}
 	
 	/**
@@ -50,11 +55,17 @@ public class ReadMappingInfo {
 	 * The strand the read maps to with respect to the reference sequence.
 	 * @return 'true' if read maps to + strand, - if read maps to - strand.
 	 */
-	public boolean strand() {return strand;}
+	public boolean strand() {
+		if ((flags & STRAND) == 0) return false;
+		else return true;
+	}
 	
 	/**
 	 * Whether the mate-pair of the read maps to the same contig
 	 * @return 'true' if on the same contig, 'false' if not
 	 */
-	public boolean sameContig() {return sameContig;}
+	public boolean sameContig() {
+		if ((flags & SAME_CONTIG) == 0) return false;
+		else return true;
+	}
 }

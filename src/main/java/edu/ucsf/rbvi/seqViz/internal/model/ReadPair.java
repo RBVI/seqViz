@@ -133,6 +133,14 @@ public class ReadPair {
 		else return null; */
 	}
 	
+	public Set<String> getAllContigs() {
+		return readInfo.keySet();
+	}
+	
+	public List<ReadMappingInfo> getReadMappingInfo(String contig) {
+		return readInfo.get(contig);
+	}
+	
 	/**
 	 * Weight of each edge between contigs. For use by displayBridgingReads() to calculate the
 	 * weight of each edge.

@@ -44,7 +44,23 @@ public class ContigsManager {
 	private BundleContext bundleContext;
 	private VisualStyle vs;
 	private CyNetworkView networkView = null;
-	
+	private int bin, binSize;
+	private HashMap<String, ComplementaryGraphs> complementaryGraphs;
+	private HashMap<String, CyEdge>	edgeNamesPlusPlus = new HashMap<String, CyEdge>(),
+			edgeNamesPlusMinus = new HashMap<String, CyEdge>(),
+			edgeNamesMinusPlus = new HashMap<String, CyEdge>(),
+			edgeNamesMinusMinus = new HashMap<String, CyEdge>();
+	private HashMap<String, Double>	edgeWeightPlusPlus = new HashMap<String, Double>(),
+			edgeWeightPlusMinus = new HashMap<String, Double>(),
+			edgeWeightMinusPlus = new HashMap<String, Double>(),
+			edgeWeightMinusMinus = new HashMap<String, Double>();
+	private HashMap<String, Long>	edgeCountPlusPlus = new HashMap<String, Long>(),
+			edgeCountPlusMinus = new HashMap<String, Long>(),
+			edgeCountMinusPlus = new HashMap<String, Long>(),
+			edgeCountMinusMinus = new HashMap<String, Long>();
+	private HashMap<String, double []> paired_end_hist, paired_end_hist_rev, read_cov_hist, read_cov_hist_pos, read_cov_hist_rev;
+	private double paired_end_min = 0, paired_end_max = 0, read_cov_max = 0, temp, read_cov_pos_max = 0, read_cov_rev_max = 0;
+
 	public ContigsManager(BundleContext bc, VisualStyle vs) {
 		contigs = new HashMap<String, Contig>();
 		readPairs = new HashMap<Long, ReadPair>();
@@ -53,6 +69,14 @@ public class ContigsManager {
 		this.vs = vs;
 		CyNetworkFactory networkFactory = (CyNetworkFactory) getService(CyNetworkFactory.class);
 		this.network = networkFactory.createNetwork();
+		complementaryGraphs = new HashMap<String, ComplementaryGraphs>();
+		paired_end_hist = new HashMap<String, double[]>();
+		paired_end_hist_rev = new HashMap<String, double[]>();
+		read_cov_hist = new HashMap<String, double[]>();
+		read_cov_hist_pos = new HashMap<String, double[]>();
+		read_cov_hist_rev = new HashMap<String, double[]>();
+		bin = 50;
+		binSize = 200;
 		settings = new SeqVizSettings();
 	}
 
@@ -106,6 +130,11 @@ public class ContigsManager {
 	public void addContig(String name, Contig contig) throws Exception {
 		if (contigs.containsKey(name)) throw new Exception("Cannot add contig, contig with same name already exists.");
 		contigs.put(name, contig);
+		paired_end_hist.put(name, new double[(contig.sequence().length() / binSize) + 1]);
+		paired_end_hist_rev.put(name, new double[(contig.sequence().length() / binSize) + 1]);
+		read_cov_hist.put(name, new double[(contig.sequence().length() / binSize) + 1]);
+		read_cov_hist_pos.put(name, new double[(contig.sequence().length() / binSize) + 1]);
+		read_cov_hist_rev.put(name, new double[(contig.sequence().length() / binSize) + 1]);
 	}
 	
 	/**
@@ -157,7 +186,10 @@ public class ContigsManager {
 				thisPair.addReadMappingInfo(contigName, readInfo);
 			}
 		}
-		readPairList.add(thisPair);
+	//	readPairList.add(thisPair);
+		iterativeBpGraph(thisPair);
+		iterativeBridgingReads(thisPair);
+		iterativeCreateHist(thisPair);
 	}
 
 	public Contig getContig(String name) {
@@ -334,6 +366,274 @@ public class ContigsManager {
 			table.getRow(cyId).set("weight_log", Math.log(table.getRow(cyId).get("weight", Double.class)));
 	}
 	
+	public void iterativeBridgingReads(ReadPair p) {
+		if (p.getMate1Contigs() != null && p.getMate2Contigs() != null) {
+			double weight = p.weight();
+		for (String contig1: p.getMate1Contigs())
+			for (String contig2: p.getMate2Contigs()) {
+				if (! contig1.equals(contig2)) {
+					String thisContig1, thisContig2;
+					CyNode n1 = contigs.get(contig1).node,
+							n2 = contigs.get(contig2).node,
+							node1, node2;
+					List<ReadMappingInfo> contig1Reads, contig2Reads;
+					if (n1.getSUID() < n2.getSUID()) {
+						thisContig1 = contig1;
+						thisContig2 = contig2;
+						node1 = n1;
+						node2 = n2;
+						contig1Reads = p.getReadMappingInfoMate1(contig1);
+						contig2Reads = p.getReadMappingInfoMate2(contig2);
+					}
+					else {
+						thisContig1 = contig2;
+						thisContig2 = contig1;
+						node1 = n2;
+						node2 = n1;
+						contig2Reads = p.getReadMappingInfoMate1(contig1);
+						contig1Reads = p.getReadMappingInfoMate2(contig2);
+					}
+					for (ReadMappingInfo readInfo1: contig1Reads)
+						for (ReadMappingInfo readInfo2: contig2Reads) {
+							if (! readInfo1.sameContig() && ! readInfo2.sameContig()) {
+								CyEdge thisEdge;
+								String edgeName = thisContig1 + thisContig2;
+								boolean read1Orientation = readInfo1.strand(),
+										read2Orientation = readInfo2.strand();
+								if (read1Orientation && read2Orientation) {
+									if (edgeNamesPlusPlus.containsKey(edgeName))
+										thisEdge = edgeNamesPlusPlus.get(edgeName);
+									else {
+										thisEdge = network.addEdge(node1, node2, true);
+										edgeNamesPlusPlus.put(edgeName, thisEdge);
+									}
+									if (edgeWeightPlusPlus.containsKey(edgeName))
+										edgeWeightPlusPlus.put(edgeName, edgeWeightPlusPlus.get(edgeName) + weight);
+									else edgeWeightPlusPlus.put(edgeName, weight);
+									if (edgeCountPlusPlus.containsKey(edgeName))
+										edgeCountPlusPlus.put(edgeName, edgeCountPlusPlus.get(edgeName) + 1);
+									else edgeCountPlusPlus.put(edgeName, (long) 1);
+								}
+								else if (read1Orientation && ! read2Orientation) {
+									if (edgeNamesPlusMinus.containsKey(edgeName))
+										thisEdge = edgeNamesPlusMinus.get(edgeName);
+									else {
+										thisEdge = network.addEdge(node1, node2, true);
+										edgeNamesPlusMinus.put(edgeName, thisEdge);
+									}
+									if (edgeWeightPlusMinus.containsKey(edgeName))
+										edgeWeightPlusMinus.put(edgeName, edgeWeightPlusMinus.get(edgeName) + weight);
+									else edgeWeightPlusMinus.put(edgeName, weight);
+									if (edgeCountPlusMinus.containsKey(edgeName))
+										edgeCountPlusMinus.put(edgeName, edgeCountPlusMinus.get(edgeName) + 1);
+									else edgeCountPlusMinus.put(edgeName, (long) 1);
+								}
+								else if (! read1Orientation && read2Orientation) {
+									if (edgeNamesMinusPlus.containsKey(edgeName))
+										thisEdge = edgeNamesMinusPlus.get(edgeName);
+									else {
+										thisEdge = network.addEdge(node1, node2, true);
+										edgeNamesMinusPlus.put(edgeName, thisEdge);
+									}
+									if (edgeWeightMinusPlus.containsKey(edgeName))
+										edgeWeightMinusPlus.put(edgeName, edgeWeightMinusPlus.get(edgeName) + weight);
+									else edgeWeightMinusPlus.put(edgeName, weight);
+									if (edgeCountMinusPlus.containsKey(edgeName))
+										edgeCountMinusPlus.put(edgeName, edgeCountMinusPlus.get(edgeName) + 1);
+									else edgeCountMinusPlus.put(edgeName, (long) 1);
+								}
+								else if (! read1Orientation && ! read2Orientation) {
+									if (edgeNamesMinusMinus.containsKey(edgeName))
+										thisEdge = edgeNamesMinusMinus.get(edgeName);
+									else {
+										thisEdge = network.addEdge(node1, node2, true);
+										edgeNamesMinusMinus.put(edgeName, thisEdge);
+									}
+									if (edgeWeightMinusMinus.containsKey(edgeName))
+										edgeWeightMinusMinus.put(edgeName, edgeWeightMinusMinus.get(edgeName) + weight);
+									else edgeWeightMinusMinus.put(edgeName, weight);
+									if (edgeCountMinusMinus.containsKey(edgeName))
+										edgeCountMinusMinus.put(edgeName, edgeCountMinusMinus.get(edgeName) + 1);
+									else edgeCountMinusMinus.put(edgeName, (long) 1);
+								}
+							}
+						}
+				}
+			}
+		}
+	}
+	
+	public void saveBridgingReads() {
+		CyTable table = network.getDefaultEdgeTable();
+		if (table.getColumn("weight") == null)
+			table.createColumn("weight", Double.class, false);
+		if (table.getColumn("orientation") == null)
+			table.createColumn("orientation", String.class, false);
+		if (table.getColumn("reliability") == null)
+			table.createColumn("reliability", Double.class, false);
+		for (String s: edgeNamesPlusPlus.keySet()) {
+			table.getRow(edgeNamesPlusPlus.get(s).getSUID()).set(CyNetwork.NAME, s);
+			table.getRow(edgeNamesPlusPlus.get(s).getSUID()).set("weight", edgeWeightPlusPlus.get(s));
+			table.getRow(edgeNamesPlusPlus.get(s).getSUID()).set("orientation", "plusplus");
+			table.getRow(edgeNamesPlusPlus.get(s).getSUID()).set("reliability", edgeWeightPlusPlus.get(s) / edgeCountPlusPlus.get(s));
+		}
+		for (String s: edgeNamesPlusMinus.keySet()) {
+			table.getRow(edgeNamesPlusMinus.get(s).getSUID()).set(CyNetwork.NAME, s);
+			table.getRow(edgeNamesPlusMinus.get(s).getSUID()).set("weight", edgeWeightPlusMinus.get(s));
+			table.getRow(edgeNamesPlusMinus.get(s).getSUID()).set("orientation", "plusminus");
+			table.getRow(edgeNamesPlusMinus.get(s).getSUID()).set("reliability", edgeWeightPlusMinus.get(s) / edgeCountPlusMinus.get(s));
+		}
+		for (String s: edgeNamesMinusPlus.keySet()) {
+			table.getRow(edgeNamesMinusPlus.get(s).getSUID()).set(CyNetwork.NAME, s);
+			table.getRow(edgeNamesMinusPlus.get(s).getSUID()).set("weight", edgeWeightMinusPlus.get(s));
+			table.getRow(edgeNamesMinusPlus.get(s).getSUID()).set("orientation", "minusplus");
+			table.getRow(edgeNamesMinusPlus.get(s).getSUID()).set("reliability", edgeWeightMinusPlus.get(s) / edgeCountMinusPlus.get(s));
+		}
+		for (String s: edgeNamesMinusMinus.keySet()) {
+			table.getRow(edgeNamesMinusMinus.get(s).getSUID()).set(CyNetwork.NAME, s);
+			table.getRow(edgeNamesMinusMinus.get(s).getSUID()).set("weight", edgeWeightMinusMinus.get(s));
+			table.getRow(edgeNamesMinusMinus.get(s).getSUID()).set("orientation", "minusminus");
+			table.getRow(edgeNamesMinusMinus.get(s).getSUID()).set("reliability", edgeWeightMinusMinus.get(s) / edgeCountMinusMinus.get(s));
+		}
+		// Calculate log of weight
+		if (table.getColumn("weight_log") == null)
+			table.createColumn("weight_log", Double.class, false);
+		for (Long cyId: table.getPrimaryKey().getValues(Long.class))
+			table.getRow(cyId).set("weight_log", Math.log(table.getRow(cyId).get("weight", Double.class)));
+	}
+	
+	public void iterativeCreateHist(ReadPair pair) {
+		for (String s: pair.getAllContigs()) {
+			double [] paired_end_hist = this.paired_end_hist.get(s),
+					paired_end_hist_rev = this.paired_end_hist_rev.get(s),
+					read_cov_hist = this.read_cov_hist.get(s),
+					read_cov_hist_pos = this.read_cov_hist_pos.get(s),
+					read_cov_hist_rev = this.read_cov_hist_rev.get(s);
+			for (ReadMappingInfo readInfo: pair.getReadMappingInfo(s)) {
+				read_cov_hist[readInfo.locus() / binSize] += (double) readInfo.read().length() / (double) binSize;
+				if (readInfo.strand())
+					read_cov_hist_pos[readInfo.locus() / binSize] += (double) readInfo.read().length() / (double) binSize;
+				else
+					read_cov_hist_rev[readInfo.locus() / binSize] -= (double) readInfo.read().length() / (double) binSize;
+				if (! readInfo.sameContig()) {
+					if (readInfo.strand())
+						paired_end_hist[readInfo.locus() / binSize] += (double) readInfo.read().length() / (double) binSize;
+					else
+						paired_end_hist_rev[readInfo.locus() / binSize] -= (double) readInfo.read().length() / (double) binSize;
+				}
+			}
+		}
+	}
+	
+	public void saveHist() {
+		CyTable table = network.getDefaultNodeTable();
+		if (table.getColumn("paired_end_hist") == null)
+			table.createListColumn("paired_end_hist", Double.class, false);
+		if (table.getColumn("paired_end_hist_rev") == null)
+			table.createListColumn("paired_end_hist_rev", Double.class, false);
+		if (table.getColumn("read_cov_hist") == null)
+			table.createListColumn("read_cov_hist", Double.class, false);
+		if (table.getColumn("read_cov_hist_pos") == null)
+			table.createListColumn("read_cov_hist_pos", Double.class, false);
+		if (table.getColumn("read_cov_hist_rev") == null)
+			table.createListColumn("read_cov_hist_rev", Double.class, false);
+
+		if (table.getColumn("paired_end_hist_log") == null)
+			table.createListColumn("paired_end_hist_log", Double.class, false);
+		if (table.getColumn("paired_end_hist_rev_log") == null)
+			table.createListColumn("paired_end_hist_rev_log", Double.class, false);
+		if (table.getColumn("read_cov_hist_log") == null)
+			table.createListColumn("read_cov_hist_log", Double.class, false);
+		if (table.getColumn("read_cov_hist_pos_log") == null)
+			table.createListColumn("read_cov_hist_pos_log", Double.class, false);
+		if (table.getColumn("read_cov_hist_rev_log") == null)
+			table.createListColumn("read_cov_hist_rev_log", Double.class, false);
+		
+		if (table.getColumn("barchart_paired_end_hist") == null)
+			table.createColumn("barchart_paired_end_hist", String.class, false);
+		if (table.getColumn("barchart_paired_end_rev_hist") == null)
+			table.createColumn("barchart_paired_end_rev_hist", String.class, false);
+		if (table.getColumn("bartchart_read_cov_hist") == null)
+			table.createColumn("bartchart_read_cov_hist", String.class, false);
+		if (table.getColumn("bartchart_read_cov_rev_hist") == null)
+			table.createColumn("bartchart_read_cov_rev_hist", String.class, false);
+		for (String s: contigs.keySet()) {
+			double [] paired_end_hist = this.paired_end_hist.get(s),
+					paired_end_hist_rev = this.paired_end_hist_rev.get(s),
+					read_cov_hist = this.read_cov_hist.get(s),
+					read_cov_hist_pos = this.read_cov_hist_pos.get(s),
+					read_cov_hist_rev = this.read_cov_hist_rev.get(s);
+			ArrayList<Double>	a = new ArrayList<Double>(),
+								b = new ArrayList<Double>(),
+								c = new ArrayList<Double>(),
+								d = new ArrayList<Double>(),
+								e = new ArrayList<Double>(),
+								f = new ArrayList<Double>(),
+								g = new ArrayList<Double>(),
+								h = new ArrayList<Double>(),
+								j = new ArrayList<Double>(),
+								k = new ArrayList<Double>();
+			for (int i = 0; i < paired_end_hist.length; i++) {
+				a.add(paired_end_hist[i]);
+			/*	if (paired_end_hist[i] == 0)
+					d.add(temp = 0.0);
+				else
+					d.add(temp = Math.log(paired_end_hist[i]) + 1); */
+				d.add(temp = Math.log(paired_end_hist[i] + 1));
+				if (temp > paired_end_max)
+					paired_end_max = temp;
+			}
+			table.getRow(contigs.get(s).node.getSUID()).set("paired_end_hist", a);
+			table.getRow(contigs.get(s).node.getSUID()).set("paired_end_hist_log", d);
+			for (int i = 0; i < paired_end_hist_rev.length; i++) {
+				b.add(paired_end_hist_rev[i]);
+			/*	if (paired_end_hist_rev[i] == 0)
+					e.add(temp = 0.0);
+				else
+					e.add(temp = - Math.log(- paired_end_hist_rev[i]) - 1); */
+				e.add(temp = - Math.log(- paired_end_hist_rev[i] + 1));
+				if (temp < paired_end_min)
+					paired_end_min = temp;
+			}
+			table.getRow(contigs.get(s).node.getSUID()).set("paired_end_hist_rev", b);
+			table.getRow(contigs.get(s).node.getSUID()).set("paired_end_hist_rev_log", e);
+			for (int i = 0; i < read_cov_hist.length; i++) {
+				c.add(read_cov_hist[i]);
+			/*	if (read_cov_hist[i] == 0)
+					f.add(temp = 0.0);
+				else
+					f.add(temp = Math.log(read_cov_hist[i]) + 1); */
+				f.add(temp = Math.log(read_cov_hist[i] + 1));
+				if (temp > read_cov_max)
+					read_cov_max = temp;
+			}
+			table.getRow(contigs.get(s).node.getSUID()).set("read_cov_hist", c);
+			table.getRow(contigs.get(s).node.getSUID()).set("read_cov_hist_log", f);
+			for (int i = 0; i < read_cov_hist_pos.length; i++) {
+				g.add(read_cov_hist_pos[i]);
+				h.add(temp = Math.log(read_cov_hist_pos[i] + 1));
+				if (temp > read_cov_pos_max)
+					read_cov_pos_max = temp;
+			}
+			table.getRow(contigs.get(s).node.getSUID()).set("read_cov_hist_pos", g);
+			table.getRow(contigs.get(s).node.getSUID()).set("read_cov_hist_pos_log", h);
+			for (int i = 0; i < read_cov_hist_rev.length; i++) {
+				j.add(read_cov_hist_rev[i]);
+				k.add(temp = - Math.log(- read_cov_hist_rev[i] + 1));
+				if (temp < read_cov_rev_max)
+					read_cov_rev_max = temp;
+			}
+			table.getRow(contigs.get(s).node.getSUID()).set("read_cov_hist_rev", j);
+			table.getRow(contigs.get(s).node.getSUID()).set("read_cov_hist_rev_log", k);
+		}
+		for (String s: contigs.keySet()) {
+			table.getRow(contigs.get(s).node.getSUID()).set("barchart_paired_end_hist", "barchart: attributelist=\"paired_end_hist_log\" showlabels=\"false\" colorlist=\"up:blue,down:yellow,zero:black\" range=\"" + paired_end_min + "," + paired_end_max + "\"");
+			table.getRow(contigs.get(s).node.getSUID()).set("barchart_paired_end_rev_hist", "barchart: attributelist=\"paired_end_hist_rev_log\" showlabels=\"false\" colorlist=\"up:blue,down:yellow,zero:black\" range=\"" + paired_end_min + "," + paired_end_max + "\"");
+			table.getRow(contigs.get(s).node.getSUID()).set("bartchart_read_cov_hist", "barchart: attributelist=\"read_cov_hist_pos_log\" showlabels=\"false\" colorlist=\"up:blue,down:yellow,zero:black\" range=\"" + read_cov_rev_max + "," + read_cov_pos_max + "\"");
+			table.getRow(contigs.get(s).node.getSUID()).set("bartchart_read_cov_rev_hist", "barchart: attributelist=\"read_cov_hist_rev_log\" showlabels=\"false\" colorlist=\"up:blue,down:yellow,zero:black\" range=\"" + read_cov_rev_max + "," + read_cov_pos_max + "\"");
+		}
+	}
+	
 	/**
 	 * Function for creating histogram from mapped reads
 	 * @param binSize size of the bins for the histogram
@@ -462,6 +762,103 @@ public class ContigsManager {
 		}
 	}
 	
+	private void iterativeBpGraph(ReadPair pair) {
+		for (String contigName: pair.getAllContigs()) {
+			ComplementaryGraphs y = complementaryGraphs.get(contigName);
+			if (y == null) {
+				y = new ComplementaryGraphs();
+				complementaryGraphs.put(contigName, y);
+			}
+			for (ReadMappingInfo read: pair.getReadMappingInfo(contigName)) {
+				Set<String> pairContigs;
+				if (read.read().pair())
+					pairContigs = pair.getMate2Contigs();
+				else
+					pairContigs = pair.getMate1Contigs();
+				if (pairContigs == null) {
+					pairContigs = new HashSet<String>();
+					pairContigs.add(null);
+				}
+				for (String c: pairContigs) {
+					HashMap<String, long[]> covGraphs;
+					if (read.strand()) covGraphs = y.pos;
+					else covGraphs = y.rev;
+					long[] covGraph;
+					if (covGraphs.containsKey(c))
+						covGraph = covGraphs.get(c);
+					else {
+						if (contigs.get(contigName).sequence().length() % bin != 0)
+							covGraph = new long[(contigs.get(contigName).sequence().length() / bin) + 1];
+						else
+							covGraph = new long[(contigs.get(contigName).sequence().length() / bin)];
+						covGraphs.put(c, covGraph);
+					}
+					int thisBin = (read.locus() - 1) / bin;
+					int readLength = read.read().length(), offset = (read.locus() - 1) % bin;
+					while (readLength > 0 && thisBin < covGraph.length) {
+						if (bin - offset > readLength)
+							covGraph[thisBin] += bin - offset;
+						else
+							covGraph[thisBin] += readLength;
+						readLength -= bin - offset;
+						offset = 0;
+						thisBin++;
+					}
+				}
+			}
+		}
+	}
+	
+	public void saveBpGraphs() {
+		CyTable table = network.getDefaultNetworkTable();
+		for (String s: contigs.keySet()) {
+			ArrayList<String> colNames = new ArrayList<String>();
+			ComplementaryGraphs graphs = complementaryGraphs.get(s);
+			String colName;
+			int lastBinSize = contigs.get(s).sequence().length() % bin;
+			if (lastBinSize == 0)
+				lastBinSize = bin;
+			if (graphs != null) {
+				for (String contigName: graphs.pos.keySet()) {
+					colName = s + ":" + (contigName != null ? contigName : "unpaired") + ":" + "+";
+					if (table.getColumn(colName) == null)
+						table.createListColumn(colName, Long.class, false);
+					List<Long> newList = new ArrayList<Long>();
+					long[] temp = graphs.pos.get(contigName);
+					for (int i = 0; i < temp.length; i++) {
+						if (i < temp.length - 1)
+							newList.add(temp[i] / bin);
+						else
+							newList.add(temp[i] / lastBinSize);
+					}
+					table.getRow(network.getSUID()).set(colName, newList);
+					colNames.add(colName);
+				}
+				for (String contigName: graphs.rev.keySet()) {
+					colName = s + ":" + (contigName != null ? contigName : "unpaired") + ":" + "-";
+					if (table.getColumn(colName) == null)
+						table.createListColumn(colName, Long.class, false);
+					List<Long> newList = new ArrayList<Long>();
+					long[] temp = graphs.rev.get(contigName);
+					for (int i = 0; i < temp.length; i++) {
+						if (i < temp.length - 1)
+							newList.add(-temp[i] / bin);
+						else
+							newList.add(-temp[i] / lastBinSize);
+					}
+					table.getRow(network.getSUID()).set(colName, newList);
+					colNames.add(colName);
+				}
+				if (table.getColumn(s + ":graphColumns") == null)
+					table.createListColumn(s + ":graphColumns", String.class, false);
+				table.getRow(network.getSUID()).set(s + ":graphColumns", colNames);
+			}
+		}
+		if (table.getColumn("graphBinSize") == null)
+			table.createColumn("graphBinSize", Long.class, false);
+		table.getRow(network.getSUID()).set("graphBinSize", (long) bin);
+	}
+
 	public ComplementaryGraphs createBpGraph(String contigName) {
 		ComplementaryGraphs y = new ComplementaryGraphs();
 		for (ReadMappingInfo read: contigs.get(contigName).allReads()) {

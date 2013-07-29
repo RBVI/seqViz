@@ -2,8 +2,7 @@ package edu.ucsf.rbvi.seqViz.internal.model;
 
 public class Read {
 	
-	private static int PAIRED_MASK = 0x80000000, LENGTH_MASK = 0x7FFFFFFF;
-	private boolean pair; // mate-pair indicator
+//	private boolean pair; // mate-pair indicator
 	private int length; // length of read
 	private long name; // name of read
 //	private String sequence; // nucleotide sequence of read
@@ -18,8 +17,9 @@ public class Read {
  	 */
 	public Read(long name, boolean pair, int length, String sequence) {
 		this.name = name;
-		this.pair = pair;
-		this.length = length;
+	//	this.pair = pair;
+		if (pair) this.length = length;
+		else this.length = -length;
 	//	this.sequence = sequence;
 	}
 	
@@ -35,14 +35,19 @@ public class Read {
 	 * 
 	 * @return false if mate-pair #1, true if mate-pair #2
 	 */
-	public boolean pair() {return pair;}
+	public boolean pair() {
+		if (length > 0)
+			return true;
+		else
+			return false;
+	}
 	
 	/**
 	 * Returns the length of the read
 	 * 
 	 * @return length of the read
 	 */
-	public int length() {return length;}
+	public int length() {return Math.abs(length);}
 	
 	/**
 	 * Returns the nucleotide sequence of the read

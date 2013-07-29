@@ -33,7 +33,7 @@
             <visualProperty name="NODE_WIDTH" default="60.0">
                 <continuousMapping attributeType="float" attributeName="length">
                     <continuousMappingPoint lesserValue="1.0" greaterValue="10.0" equalValue="10.0" attrValue="76.0"/>
-                    <continuousMappingPoint lesserValue="188.69651348185988" greaterValue="1.0" equalValue="188.69651348185988" attrValue="34333.0"/>
+                    <continuousMappingPoint lesserValue="2752.0" greaterValue="1.0" equalValue="2752.0" attrValue="500000.0"/>
                 </continuousMapping>
             </visualProperty>
             <visualProperty name="NODE_CUSTOMGRAPHICS_POSITION_3" default="C,C,c,0.00,0.00"/>
@@ -156,7 +156,7 @@
             <visualProperty name="NODE_WIDTH" default="60.0">
                 <continuousMapping attributeType="float" attributeName="length">
                     <continuousMappingPoint lesserValue="1.0" greaterValue="10.0" equalValue="10.0" attrValue="76.0"/>
-                    <continuousMappingPoint lesserValue="188.69651348185988" greaterValue="1.0" equalValue="188.69651348185988" attrValue="34333.0"/>
+                    <continuousMappingPoint lesserValue="2752.0" greaterValue="1.0" equalValue="2752.0" attrValue="500000.0"/>
                 </continuousMapping>
             </visualProperty>
             <visualProperty name="NODE_CUSTOMGRAPHICS_POSITION_3" default="C,C,c,0.00,0.00"/>
@@ -320,7 +320,7 @@
             <visualProperty name="NODE_WIDTH" default="60.0">
                 <continuousMapping attributeType="float" attributeName="length">
                     <continuousMappingPoint lesserValue="1.0" greaterValue="10.0" equalValue="10.0" attrValue="76.0"/>
-                    <continuousMappingPoint lesserValue="188.69651348185988" greaterValue="1.0" equalValue="188.69651348185988" attrValue="34333.0"/>
+                    <continuousMappingPoint lesserValue="2752.0" greaterValue="1.0" equalValue="2752.0" attrValue="500000.0"/>
                 </continuousMapping>
             </visualProperty>
             <visualProperty name="NODE_CUSTOMGRAPHICS_SIZE_3" default="0.0"/>
