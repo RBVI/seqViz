@@ -9,6 +9,11 @@ import org.cytoscape.work.Tunable;
 
 import edu.ucsf.rbvi.seqViz.internal.model.ContigsManager;
 
+/**
+ * This task maps reads to contigs using the Bowtie2 mapper.
+ * @author aywu
+ *
+ */
 public class BowtieMapReadsTask extends AbstractMapReadsTask {
 
 	@Tunable(description="File containing the contigs",params="input=true;fileCategory=unspecified")

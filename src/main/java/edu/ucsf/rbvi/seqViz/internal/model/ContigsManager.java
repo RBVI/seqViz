@@ -176,6 +176,16 @@ public class ContigsManager {
 		thisPair.addReadMappingInfo(contigName, readInfo);
 	}
 	
+	/**
+	 * Adds reads in the form of a read bundle to ContigsManager. A read bundle is a special
+	 * HashMap which stores all the ReadMappingInfo for a particular mate-pair.
+	 * 
+	 * @param readBundle A special object that stores the read mapping information. All
+	 * ReadMappingInfo in readBundle are from the same mate-pair (either mate). For a HashMap of
+	 * type HashMap<String, List<ReadMappingInfo>>, all ReadMappingInfo in a List<ReadMappingInfo>
+	 * is from the same contig of label String.
+	 * @throws Exception Throws exception if contig is not already loaded into ContigsManager.
+	 */
 	public void addRead(HashMap<String, List<ReadMappingInfo>> readBundle) throws Exception {
 		ReadPair thisPair = new ReadPair();
 		for (String contigName: readBundle.keySet()) {
@@ -191,7 +201,12 @@ public class ContigsManager {
 		iterativeBridgingReads(thisPair);
 		iterativeCreateHist(thisPair);
 	}
-
+	
+	/**
+	 * Returns contig with name "name"
+	 * @param name Name of the contig.
+	 * @return The contig.
+	 */
 	public Contig getContig(String name) {
 		return contigs.get(name);
 	}
@@ -366,7 +381,7 @@ public class ContigsManager {
 			table.getRow(cyId).set("weight_log", Math.log(table.getRow(cyId).get("weight", Double.class)));
 	}
 	
-	public void iterativeBridgingReads(ReadPair p) {
+	private void iterativeBridgingReads(ReadPair p) {
 		if (p.getMate1Contigs() != null && p.getMate2Contigs() != null) {
 			double weight = p.weight();
 		for (String contig1: p.getMate1Contigs())
@@ -463,6 +478,10 @@ public class ContigsManager {
 		}
 	}
 	
+	/**
+	 * Save the edges between the contigs that was built in the process of reading in the output
+	 * of the mapper to this session.
+	 */
 	public void saveBridgingReads() {
 		CyTable table = network.getDefaultEdgeTable();
 		if (table.getColumn("weight") == null)
@@ -525,6 +544,9 @@ public class ContigsManager {
 		}
 	}
 	
+	/**
+	 * Save histograms for display on node in this session.
+	 */
 	public void saveHist() {
 		CyTable table = network.getDefaultNodeTable();
 		if (table.getColumn("paired_end_hist") == null)
@@ -809,6 +831,9 @@ public class ContigsManager {
 		}
 	}
 	
+	/**
+	 * Save graphs generated for ContigView and SequenceView to this session.
+	 */
 	public void saveBpGraphs() {
 		CyTable table = network.getDefaultNetworkTable();
 		for (String s: contigs.keySet()) {
@@ -859,7 +884,7 @@ public class ContigsManager {
 		table.getRow(network.getSUID()).set("graphBinSize", (long) bin);
 	}
 
-	public ComplementaryGraphs createBpGraph(String contigName) {
+	private ComplementaryGraphs createBpGraph(String contigName) {
 		ComplementaryGraphs y = new ComplementaryGraphs();
 		for (ReadMappingInfo read: contigs.get(contigName).allReads()) {
 			ReadPair pair = readPairs.get(read.read().name());
@@ -1016,6 +1041,9 @@ public class ContigsManager {
 		table.getRow(network.getSUID()).set("graphBinSize", (long) binSize);
 	}
 
+	/**
+	 * Display network
+	 */
 	public void displayNetwork() {
 		CyNetworkManager networkManager = (CyNetworkManager) getService(CyNetworkManager.class);
 		networkManager.addNetwork(network);
@@ -1031,6 +1059,10 @@ public class ContigsManager {
 		myView.updateView();
 	}
 	
+	/**
+	 * Apply a visual style to the network.
+	 * @param vs
+	 */
 	public void applyStyle(VisualStyle vs) {
 		if (networkView != null) {
 			if (vs != null)

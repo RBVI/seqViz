@@ -133,10 +133,19 @@ public class ReadPair {
 		else return null; */
 	}
 	
+	/**
+	 * Get a set of the names of all contigs.
+	 * @return A Set of the names of all contigs.
+	 */
 	public Set<String> getAllContigs() {
 		return readInfo.keySet();
 	}
 	
+	/**
+	 * Get a list of all ReadMappingInfo in stored in the class.
+	 * @param contig
+	 * @return
+	 */
 	public List<ReadMappingInfo> getReadMappingInfo(String contig) {
 		return readInfo.get(contig);
 	}

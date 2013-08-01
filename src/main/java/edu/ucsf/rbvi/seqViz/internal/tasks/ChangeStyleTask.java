@@ -9,6 +9,12 @@ import org.cytoscape.work.TaskMonitor;
 
 import edu.ucsf.rbvi.seqViz.internal.model.ContigsManager;
 
+/**
+ * This task changes the visual style of a network. See src/main/java/resources for styles
+ * available.
+ * @author aywu
+ *
+ */
 public class ChangeStyleTask extends AbstractTask {
 	
 	private CyNetworkView networkView;

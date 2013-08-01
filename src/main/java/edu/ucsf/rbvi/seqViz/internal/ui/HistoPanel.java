@@ -16,6 +16,11 @@ import java.util.HashMap;
 
 import javax.swing.JPanel;
 
+/**
+ * Creates a JPanel that displays the histogram as a line graph.
+ * @author aywu
+ *
+ */
 public class HistoPanel extends JPanel {
 
 	/**
@@ -31,6 +36,16 @@ public class HistoPanel extends JPanel {
 	private String seq = null;
 	private Font seqFont = null;
 	
+	/**
+	 * Create a HistoPanel. Creates a panel on the screen the size of width X height, with scales
+	 * determined by the parameters x_min, x_max, y_min and y_max.
+	 * @param width width of the panel (pixels)
+	 * @param height height of the panel (pixel)
+	 * @param x_min lower limit of the x-axis
+	 * @param x_max upper limit of the x-axis
+	 * @param y_min lower limit of the y-axis
+	 * @param y_max upper limit of the y-axis
+	 */
 	public HistoPanel(int width, int height, double x_min, double x_max, double y_min, double y_max) {
 		setHistoPanel(width, height, x_min, x_max, y_min, y_max);
 		graphs = new HashMap<String, Graphs>();
@@ -54,13 +69,32 @@ public class HistoPanel extends JPanel {
 		transform.scale(x_inc, -y_inc);
 	}
 	
+	/**
+	 * Resize the HistoPanel.
+	 * @param width width of the panel (pixels)
+	 * @param height height of the panel (pixel)
+	 */
 	public void setHistoPanelSize(int width, int height) {
 		setHistoPanel(width, height, this.x_min, this.x_max, this.y_min, this.y_max);
 	}
 	
+	/**
+	 * Change the x and y axes of the HistoPanel.
+	 * @param x_min lower limit of the x-axis
+	 * @param x_max upper limit of the x-axis
+	 * @param y_min lower limit of the y-axis
+	 * @param y_max upper limit of the y-axis
+	 */
 	public void setHistoPanelSize(int x_min, int x_max, int y_min, int y_max) {
 		setHistoPanel(this.width, this.height, x_min, x_max, y_min, y_max);
 	}
+	
+	/**
+	 * Convert screen coordinates to real coordinates.
+	 * @param d the screen coordinates
+	 * @return Real coordinates.
+	 * @throws NoninvertibleTransformException
+	 */
 	public Point2D realCoordinates(Point2D d) throws NoninvertibleTransformException {
 		Point2D temp = new Point2D() {
 			private double x = 0, y = 0;
@@ -86,6 +120,11 @@ public class HistoPanel extends JPanel {
 		return transform.inverseTransform(d, temp);
 	}
 	
+	/**
+	 * Convert real coordinates to screen coordinates
+	 * @param d real coordinates
+	 * @return screen coordinates
+	 */
 	public Point2D cartesianCoordinates(Point2D d) {
 		Point2D temp = new Point2D() {
 			private double x = 0, y = 0;
@@ -126,7 +165,14 @@ public class HistoPanel extends JPanel {
 		}
 	}
 	
-	public void addSequence(String sequence, Font font, int beg, int end) {
+	/**
+	 * Not to be used.
+	 * @param sequence
+	 * @param font
+	 * @param beg
+	 * @param end
+	 */
+	private void addSequence(String sequence, Font font, int beg, int end) {
 		seq = sequence.substring(beg, end);
 		seqFont = font;
 		this.beg = beg;
@@ -135,10 +181,23 @@ public class HistoPanel extends JPanel {
 		setHistoPanelSize(metrics.stringWidth(seq), this.height);
 	}
 	
+	/**
+	 * Add histogram to the HistoPanel. If the name is the same as a previous histogram, the
+	 * previous histogram is overwritten by the new one.
+	 * @param name Name of the histogram.
+	 * @param c Color the histogram.
+	 * @param x x-coordinates of the points of the histogram.
+	 * @param y y-coordinates of the name of the histogram.
+	 */
 	public void addGraph(String name, Color c, double[] x, double[] y) {
 		graphs.put(name, new Graphs(c, x, y));
 	}
 	
+	/**
+	 * Change color of a histogram already in HistoPanel.
+	 * @param name Name of the histogram.
+	 * @param c Color of the histogram.
+	 */
 	public void changeColor(String name, Color c) {
 		if (graphs.containsKey(name)) {
 			Graphs g = graphs.get(name);
@@ -146,6 +205,11 @@ public class HistoPanel extends JPanel {
 		}
 	}
 	
+	/**
+	 * Set a histogram as visible or invisible.
+	 * @param name Name of the histogram.
+	 * @param display "true" for allowing the histogram to be displayed, "false" if not.
+	 */
 	public void setGraphVisible(String name, boolean display) {
 		if (graphs.containsKey(name)) {
 			Graphs g = graphs.get(name);
@@ -153,14 +217,26 @@ public class HistoPanel extends JPanel {
 		}
 	}
 	
+	/**
+	 * Set a vertical line in the histogram. Used as left limit of SequenceView.
+	 * @param beg x-coordinate of the vertical line.
+	 */
 	public void setBegLine(int beg) {
 		begLine = beg;
 	}
 	
+	/**
+	 * Set a vertical line in the histogram. Used as right limit of SequenceView.
+	 * @param end x-coordinate of vertical line.
+	 */
 	public void setEndLine(int end) {
 		endLine = end;
 	}
 	
+	/**
+	 * Set vertical determined by setBegLine() and setEndLine() lines visible.
+	 * @param b "true" for visible and "false" for invisible.
+	 */
 	public void setDrawYLines(boolean b) {
 		drawYLine = b;
 	}

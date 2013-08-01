@@ -33,7 +33,7 @@ public class Read {
 	/**
 	 * Return the mate-pair information of read
 	 * 
-	 * @return false if mate-pair #1, true if mate-pair #2
+	 * @return true if mate-pair #1, false if mate-pair #2
 	 */
 	public boolean pair() {
 		if (length > 0)

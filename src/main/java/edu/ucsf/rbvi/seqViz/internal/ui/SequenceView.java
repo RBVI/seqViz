@@ -20,6 +20,11 @@ import javax.swing.JTextField;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyTable;
 
+/**
+ * A JPanel to display the sequence alongside the histograms.
+ * @author aywu
+ *
+ */
 public class SequenceView extends JPanel {
 
 	/**
@@ -38,6 +43,14 @@ public class SequenceView extends JPanel {
 	private List<String> graphs;
 	private CyNetwork network;
 	
+	/**
+	 * Create SequenceView object
+	 * @param network CyNetwork with appropriate tables in defaultNetworkTable() to create
+	 *        histograms from.
+	 * @param suid SUID of the contig node
+	 * @param minPos left limit of the histogram/sequence to be displayed
+	 * @param maxPos right limit of the histogram/sequence to be displayed
+	 */
 	public SequenceView(CyNetwork network, Long suid, int minPos, int maxPos) {
 		minPos--;
 		maxPos--;
