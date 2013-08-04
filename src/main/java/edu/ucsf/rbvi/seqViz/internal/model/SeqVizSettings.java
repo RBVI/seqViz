@@ -42,7 +42,9 @@ public class SeqVizSettings {
 	}
 	
 	public SeqVizSettings() {
-		threads = 2;
+		int cores = Runtime.getRuntime().availableProcessors();
+		cores = Math.max(cores-2, 1);
+		threads = cores;
 		loadBridingReads = false;
 	}
 	

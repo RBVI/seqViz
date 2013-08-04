@@ -35,7 +35,7 @@ public class SeqVizSettingsTask extends AbstractTask {
 		// TODO Auto-generated method stub
 		if (mapper.getSelectedValue().equals(mapperChoice[0])) {
 			int cores = Runtime.getRuntime().availableProcessors();
-			cores = cores-2;
+			cores = Math.max(cores-2, 1);
 			if (!manager.isInitialized())
 				manager.initializeSettings(new SeqVizSettings(new BowtieMapReadsTask(manager), cores, mapDir, tempDir, loadBridgingReads));
 			else {
