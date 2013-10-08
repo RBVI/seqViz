@@ -30,6 +30,7 @@ public class BowtieMapReadsTask extends AbstractMapReadsTask {
 		super(contigs/*, mate1, mate2*/);
 		String [] fileFormat = {"phred33", "phred64"};
 		format = new ListSingleSelection<String>(fileFormat);
+		format.setSelectedValue("phred33");
 		// TODO Auto-generated constructor stub
 	}
 
