@@ -6,6 +6,7 @@ import java.io.FileReader;
 
 import org.cytoscape.work.TaskMonitor;
 import org.cytoscape.work.Tunable;
+import org.cytoscape.work.util.ListSingleSelection;
 
 import edu.ucsf.rbvi.seqViz.internal.model.ContigsManager;
 
@@ -22,9 +23,13 @@ public class BowtieMapReadsTask extends AbstractMapReadsTask {
 	public File mate2;
 	@Tunable(description="File containing reads of mate1", params="input=true;fileCategory=unspecified")
 	public File mate1;
+	@Tunable(description="Format of read files")
+	public ListSingleSelection<String> format;
 	
 	public BowtieMapReadsTask(ContigsManager contigs/*, String mate1, String mate2 */) {
 		super(contigs/*, mate1, mate2*/);
+		String [] fileFormat = {"phred33", "phred64"};
+		format = new ListSingleSelection<String>(fileFormat);
 		// TODO Auto-generated constructor stub
 	}
 
@@ -52,7 +57,7 @@ public class BowtieMapReadsTask extends AbstractMapReadsTask {
 		index.waitFor();
 		if (index.exitValue() != 0)
 			throw new Exception("bowtie2-build exited with error " + index.exitValue());
-		Process p = Runtime.getRuntime().exec(contigs.getSettings().mapper_dir + "bowtie2 -q --end-to-end --fast -p " + contigs.getSettings().threads + " --phred64 -a -x " + contigs.getSettings().temp_dir + contigsFile.getName() + " -1 " + mate1.getAbsolutePath() + " -2 " + mate2.getAbsolutePath());
+		Process p = Runtime.getRuntime().exec(contigs.getSettings().mapper_dir + "bowtie2 -q --end-to-end --fast -p " + contigs.getSettings().threads + " --" + format.getSelectedValue() + " -a -x " + contigs.getSettings().temp_dir + contigsFile.getName() + " -1 " + mate1.getAbsolutePath() + " -2 " + mate2.getAbsolutePath());
 		AbstractMapOutputReader reader = new SAMReader(contigs);
 		reader.readReads(p.getInputStream(), arg0, readEstimate);
 		p.waitFor();
