@@ -138,7 +138,11 @@ public class SequenceView extends JPanel {
 				}
 				i++;
 			}
-			final Color randomColor = new Color(((int) (random.nextFloat() * 4)) * 64, ((int) (random.nextFloat() * 4)) * 64, ((int) (random.nextFloat() * 4)) * 64);
+			final Color randomColor;
+			if (! s.split(":")[0].equals(s.split(":")[1]))
+				randomColor = new Color(((int) (random.nextFloat() * 4)) * 64, ((int) (random.nextFloat() * 4)) * 64, ((int) (random.nextFloat() * 4)) * 64);
+			else
+				randomColor = Color.GRAY;
 			if (s.split(":")[2].equals("+"))
 				seqViewUp.addGraph(s, randomColor, x, y);
 			if (s.split(":")[2].equals("-"))
