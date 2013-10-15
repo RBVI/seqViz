@@ -176,19 +176,22 @@ public class ContigView {
 				x[i] = i * binSize + 1;
 				i++;
 			}
-			final Color randomColor = new Color(((int) (random.nextFloat() * 4)) * 64, ((int) (random.nextFloat() * 4)) * 64, ((int) (random.nextFloat() * 4)) * 64);
-			histoPanel2.addGraph(s, randomColor, x, y);
+			final Color randomColor;
 			JPanel newGraphColor = new JPanel();
 		//	graphColor[j] = newGraphColor;
 			newGraphColor.setLayout(new FlowLayout());
-			if (! s.split(":")[0].equals(s.split(":")[1]))
+			if (! s.split(":")[0].equals(s.split(":")[1])) {
+				randomColor = new Color(((int) (random.nextFloat() * 4)) * 64, ((int) (random.nextFloat() * 4)) * 64, ((int) (random.nextFloat() * 4)) * 64);
 				graphColor.put(s, newGraphColor);
+			}
 			else {
 				if (s.split(":")[2].equals("+"))
 					sameContigGraphPos = newGraphColor;
 				else if (s.split(":")[2].equals("-"))
 					sameContigGraphRev = newGraphColor;
+				randomColor = Color.GRAY;
 			}
+			histoPanel2.addGraph(s, randomColor, x, y);
 		//	JLabel nodeTitle = new JLabel(s.split(":")[1] + "-" + s.split(":")[2]);
 		//	nodeTitle.setFont(new Font(Font.DIALOG, Font.PLAIN, 12));
 		//	newGraphColor.add(nodeTitle);
@@ -219,7 +222,14 @@ public class ContigView {
 			displayGraph[j] = b;
 			b.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
 			b.setToolTipText("Toggle on/off this graph.");
-			b.setSelected(true);
+			if (sameContigGraphPos == newGraphColor || sameContigGraphRev == newGraphColor) {
+				b.setSelected(false);
+				histoPanel2.setGraphVisible(s, false);
+			}
+			else {
+				b.setSelected(true);
+				histoPanel2.setGraphVisible(s, true);
+			}
 			b.addItemListener(new ItemListener() {
 				
 				public void itemStateChanged(ItemEvent e) {
