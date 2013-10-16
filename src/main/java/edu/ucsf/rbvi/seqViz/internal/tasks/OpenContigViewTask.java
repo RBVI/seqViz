@@ -17,7 +17,7 @@ public class OpenContigViewTask extends AbstractNodeViewTask {
 	
 	private ContigsManager manager;
 	private String contig;
-	private CyNetwork cyNetwork;
+	private CyNetworkView cyNetwork;
 	private long suid;
 	
 	public OpenContigViewTask(View<CyNode> nodeView, CyNetworkView netView) {
@@ -27,7 +27,7 @@ public class OpenContigViewTask extends AbstractNodeViewTask {
 	public OpenContigViewTask(View<CyNode> nodeView, CyNetworkView netView, ContigsManager manager) {
 		super(nodeView, netView);
 		contig = netView.getModel().getDefaultNodeTable().getRow(nodeView.getModel().getSUID()).get(CyNetwork.NAME, String.class);
-		cyNetwork = netView.getModel();
+		cyNetwork = netView;
 		suid = nodeView.getModel().getSUID();
 		this.manager = manager;
 	}
