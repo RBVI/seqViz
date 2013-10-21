@@ -4,7 +4,7 @@ public class ReadMappingInfo {
 	
 	private static byte STRAND = 0x01, SAME_CONTIG = 0x02;
 	private Read read;
-//	private int score;
+	private int score;
 	private int locus;
 //	private boolean strand;
 //	private boolean sameContig;
@@ -22,7 +22,7 @@ public class ReadMappingInfo {
 	 */
 	public ReadMappingInfo(Read read, int score, int locus, boolean strand, boolean sameContig) {
 		this.read = read;
-//		this.score = score;
+		this.score = score;
 		this.locus = locus;
 		flags = 0x00;
 		if (strand) flags = (byte) (flags | STRAND);
@@ -68,4 +68,10 @@ public class ReadMappingInfo {
 		if ((flags & SAME_CONTIG) == 0) return false;
 		else return true;
 	}
+	
+	/**
+	 * The mapping score of the read
+	 * @return score
+	 */
+	public int score() {return score;}
 }
