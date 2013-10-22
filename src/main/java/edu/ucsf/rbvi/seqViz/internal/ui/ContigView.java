@@ -70,7 +70,7 @@ public class ContigView {
 	private Contig contig;
 	private ComplementaryGraphs graphs;
 	private long y_min = 0, y_max = 0, contigLength = 0, binSize;
-	private int width = 800, height = 400, widthScale = 1, heightScale = 1, begLine, endLine;
+	private int width = 800, height = 400, widthScale = 1, heightScale = 1, begLine, endLine, characterWidth = 1;
 	
 /*	public ContigView(ContigsManager manager, String contig) {
 		this.manager = manager;
@@ -170,6 +170,7 @@ public class ContigView {
 		settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.PAGE_AXIS));
 
 		histoPanel2 = new SequencePanel(width, height, 1, contigLength, y_min, y_max, nodeTable.getRow(suid).get("sequence", String.class));
+		characterWidth = histoPanel2.characterWidth();
 		int j = 0;
 		int labelLength = 0, tempLength;
 		for (String s: graphs)
@@ -285,7 +286,7 @@ public class ContigView {
 		zoomIn.addActionListener(new ActionListener() {
 			
 			public void actionPerformed(ActionEvent e) {
-				if (width * widthScale < contigLength) {
+				if (width * widthScale < contigLength * characterWidth * 2) {
 					widthScale *= 2;
 					histoPanel2.setSequencePanelSize(width * widthScale, height * heightScale);
 					histoPanel2.repaint();

@@ -23,7 +23,7 @@ public class SequencePanel extends JPanel {
 	private static final long serialVersionUID = -5894823555682540267L;
 	private static final String fontName = Font.MONOSPACED;
 	private static int fontStyle = Font.PLAIN;
-	private static Font font = new Font(fontName, fontStyle, 10);
+	private static Font font = new Font(fontName, fontStyle, 12);
 	private boolean drawYLine = false;
 	private int width, height, x_center, y_center, y_center_lower, begLine, endLine, sequenceHeight, characterWidth;
 	private Integer beg = null, end = null;
@@ -32,6 +32,7 @@ public class SequencePanel extends JPanel {
 	private HashMap<String, Graphs> graphs;
 	private String seq = null;
 	private Font seqFont;
+	private FontMetrics fontMetrics;
 	
 	/**
 	 * Create a HistoPanel. Creates a panel on the screen the size of width X height, with scales
@@ -58,7 +59,7 @@ public class SequencePanel extends JPanel {
 		this.y_min = y_min;
 		this.y_max = y_max;
 		
-		FontMetrics fontMetrics = this.getFontMetrics(font);
+		fontMetrics = this.getFontMetrics(font);
 		sequenceHeight = fontMetrics.getHeight();
 		characterWidth = fontMetrics.stringWidth(seq) / seq.length();
 		
@@ -259,6 +260,12 @@ public class SequencePanel extends JPanel {
 		drawYLine = b;
 	}
 	
+	/**
+	 * Width of the font used to display the sequence.
+	 * @return Width of the font used to display the sequence.
+	 */
+	public int characterWidth() {return characterWidth;}
+	
 	private void drawAxes(Graphics g) {
 		g.setColor(Color.BLACK);
 		g.setFont(new Font(Font.SERIF, Font.PLAIN, 10));
@@ -290,27 +297,24 @@ public class SequencePanel extends JPanel {
 				e.printStackTrace();
 			}
 		}
-/*		for (double j = x_center; j < width; j += x_step) {
-			int i = (int) j;
-			System.out.println(i);
-			g.drawString(String.format("%.1f", i / x_inc), i, y_center - 5);
-			g.drawLine(i, y_center - 5, i, y_center + 5);
+		if (x_inc > characterWidth) {
+			g.setFont(font);
+			for (int i = 0; i < seq.length(); i++) {
+				switch (seq.charAt(i)) {
+				case 'A': g.setColor(Color.GREEN); break;
+				case 'T': g.setColor(Color.RED); break;
+				case 'C': g.setColor(Color.BLUE); break;
+				case 'G': g.setColor(Color.BLACK); break;
+				case 'a': g.setColor(Color.GREEN); break;
+				case 't': g.setColor(Color.RED); break;
+				case 'c': g.setColor(Color.BLUE); break;
+				case 'g': g.setColor(Color.BLACK); break;
+				default: g.setColor(Color.GRAY); break;
+			}
+			char[] character = {seq.charAt(i)};
+			g.drawString(new String(character), (int) (i * x_inc), y_center + fontMetrics.getAscent());
+			}
 		}
-		for (int j = x_center; j > 0; j -= x_step) {
-			int i = (int) j;
-			g.drawString(String.format("%.1f", i / x_inc), i, y_center - 5);
-			g.drawLine(i, y_center - 5, i, y_center + 5);
-		}
-		for (int j = y_center; j > 0; j -= y_step) {
-			int i = (int) j;
-			g.drawString(String.format("%.1f", (y_center - i) / y_inc), 0, i);
-			g.drawLine(0, i, width, i);
-		}
-		for (int j = y_center; j < height; j += y_step) {
-			int i = (int) j;
-			g.drawString(String.format("%.1f", (y_center - i) / y_inc), 0, i);
-			g.drawLine(0, i, width, i);
-		} */
 	}
 	
 	private void drawLineGraph(Graphics g, double[] xy, Color c) {
