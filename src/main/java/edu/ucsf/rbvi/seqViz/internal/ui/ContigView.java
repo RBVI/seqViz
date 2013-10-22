@@ -65,7 +65,7 @@ public class ContigView {
 	private JSplitPane splitPane;
 	private JScrollPane histoPane, settingsPane;
 	private JPanel histoPanel, zoomPane, settingsPanel;
-	private HistoPanel histoPanel2;
+	private SequencePanel histoPanel2;
 	private ContigsManager manager;
 	private Contig contig;
 	private ComplementaryGraphs graphs;
@@ -169,7 +169,7 @@ public class ContigView {
 		settingsPanel = new JPanel();
 		settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.PAGE_AXIS));
 
-		histoPanel2 = new HistoPanel(width, height, 1, contigLength, y_min, y_max);
+		histoPanel2 = new SequencePanel(width, height, 1, contigLength, y_min, y_max, nodeTable.getRow(suid).get("sequence", String.class));
 		int j = 0;
 		int labelLength = 0, tempLength;
 		for (String s: graphs)
@@ -287,7 +287,7 @@ public class ContigView {
 			public void actionPerformed(ActionEvent e) {
 				if (width * widthScale < contigLength) {
 					widthScale *= 2;
-					histoPanel2.setHistoPanelSize(width * widthScale, height * heightScale);
+					histoPanel2.setSequencePanelSize(width * widthScale, height * heightScale);
 					histoPanel2.repaint();
 					histoPane.revalidate();;
 				}
@@ -299,7 +299,7 @@ public class ContigView {
 			public void actionPerformed(ActionEvent e) {
 				if (widthScale > 1) {
 					widthScale /= 2;
-					histoPanel2.setHistoPanelSize(width * widthScale, height * heightScale);
+					histoPanel2.setSequencePanelSize(width * widthScale, height * heightScale);
 					histoPanel2.repaint();
 					histoPanel2.revalidate();
 				}
@@ -311,7 +311,7 @@ public class ContigView {
 			public void actionPerformed(ActionEvent e) {
 				if (height * heightScale < y_max - y_min) {
 					heightScale *= 2;
-					histoPanel2.setHistoPanelSize(width * widthScale, height * heightScale);
+					histoPanel2.setSequencePanelSize(width * widthScale, height * heightScale);
 					histoPanel2.repaint();
 					histoPanel2.revalidate();
 				}
@@ -323,7 +323,7 @@ public class ContigView {
 			public void actionPerformed(ActionEvent e) {
 				if (heightScale > 1) {
 					heightScale /= 2;
-					histoPanel2.setHistoPanelSize(width * widthScale, height * heightScale);
+					histoPanel2.setSequencePanelSize(width * widthScale, height * heightScale);
 					histoPanel2.repaint();
 					histoPanel2.revalidate();
 				}
