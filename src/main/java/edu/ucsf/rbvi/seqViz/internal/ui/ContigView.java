@@ -11,6 +11,9 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -61,6 +64,7 @@ public class ContigView {
 	 * 
 	 */
 	private static final long serialVersionUID = -7713836441534331408L;
+	private static final int defaultWidth = 800, defaultHeight = 400;
 	private JButton zoomIn, zoomOut, zoomInY, zoomOutY;
 	private JSplitPane splitPane;
 	private JScrollPane histoPane, settingsPane;
@@ -70,7 +74,8 @@ public class ContigView {
 	private Contig contig;
 	private ComplementaryGraphs graphs;
 	private long y_min = 0, y_max = 0, contigLength = 0, binSize;
-	private int width = 800, height = 400, widthScale = 1, heightScale = 1, begLine, endLine, characterWidth = 1;
+	private int width = defaultWidth, height = defaultHeight, widthScale = 1, heightScale = 1, begLine, endLine, characterWidth = 1;
+	private Clipboard clipboard;
 	
 /*	public ContigView(ContigsManager manager, String contig) {
 		this.manager = manager;
@@ -150,6 +155,7 @@ public class ContigView {
 		final HashMap<String, Long> contigMap = new HashMap<String, Long>();
 		JCheckBox[] displayGraph = new JCheckBox[graphs.size()];
 		JPanel sameContigGraphPos = null, sameContigGraphRev = null;
+		clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 		binSize = table.getRow(network.getSUID()).get("graphBinSize", Long.class);
 		Random random = new Random(70);
 		contigLength = nodeTable.getRow(suid).get("length", Long.class);
@@ -355,18 +361,27 @@ public class ContigView {
 			
 			public void mouseReleased(MouseEvent e) {
 				histoPanel2.setDrawYLines(false);
+				StringSelection selection;
+				try {
+					selection = new StringSelection(histoPanel2.selectedSequence());
+					clipboard.setContents(selection, null);
+				} catch (Exception e2) {
+					// TODO Auto-generated catch block
+					e2.printStackTrace();
+				}
+				histoPanel2.setHighlightSequence(false);
 				if (begLine < endLine) {
 					Point d = new Point(begLine, 0);
 					Point d2 = new Point(endLine, 0);
 					try {
 						Point2D p = histoPanel2.realCoordinates(d),
 								p2 = histoPanel2.realCoordinates(d2);
-						JPanel seqView = new SequenceView(network, suid2, (int) p.getX(), (int) p2.getX());
+					/*	JPanel seqView = new SequenceView(network, suid2, (int) p.getX(), (int) p2.getX());
 						JFrame frame = new JFrame(contig);
 						frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 						frame.getContentPane().add(seqView);
 						frame.pack();
-						frame.setVisible(true);
+						frame.setVisible(true); */
 					} catch (NoninvertibleTransformException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
@@ -378,7 +393,21 @@ public class ContigView {
 			public void mousePressed(MouseEvent e) {
 				histoPanel2.setBegLine(begLine = e.getX());
 				histoPanel2.setEndLine(endLine = e.getX());
-				histoPanel2.setDrawYLines(true);
+				Point pBeg = new Point(begLine, e.getY());
+				Point2D p2Beg;
+				boolean sequenceSelected = false;
+				try {
+					p2Beg = histoPanel2.realCoordinates(pBeg);
+					sequenceSelected = p2Beg.getY() == 0;
+				} catch (NoninvertibleTransformException e2) {
+					// TODO Auto-generated catch block
+					e2.printStackTrace();
+				}
+
+				if (sequenceSelected)
+					histoPanel2.setHighlightSequence(true);
+				else
+					histoPanel2.setDrawYLines(true);
 				histoPanel2.repaint();
 			}
 			

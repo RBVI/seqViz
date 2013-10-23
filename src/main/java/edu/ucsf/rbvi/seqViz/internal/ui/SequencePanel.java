@@ -24,8 +24,8 @@ public class SequencePanel extends JPanel {
 	private static final String fontName = Font.MONOSPACED;
 	private static int fontStyle = Font.PLAIN;
 	private static Font font = new Font(fontName, fontStyle, 12);
-	private boolean drawYLine = false;
-	private int width, height, x_center, y_center, y_center_lower, begLine, endLine, sequenceHeight, characterWidth;
+	private boolean drawYLine = false, highlightSequence = false;
+	private int width, height, x_center, y_center, y_center_lower, begLine, endLine, sequenceHeight, characterWidth, xBeg = 0, xEnd = 0;
 	private Integer beg = null, end = null;
 	private double x_inc, y_inc, x_min, x_max, y_min, y_max;
 	private AffineTransform transform, transformNeg;
@@ -261,10 +261,41 @@ public class SequencePanel extends JPanel {
 	}
 	
 	/**
+	 * Highlight part of sequence selected
+	 * @param b "true" for visible and "false" for invisible.
+	 */
+	public void setHighlightSequence(boolean b) {
+		highlightSequence = b;
+	}
+	
+	/**
 	 * Width of the font used to display the sequence.
 	 * @return Width of the font used to display the sequence.
 	 */
 	public int characterWidth() {return characterWidth;}
+	
+	/**
+	 * Beginning of sequence selected.
+	 * @return
+	 */
+	public int seqBeg() {return xBeg;}
+	
+	/**
+	 * End of sequence selected.
+	 * @return
+	 */
+	public int seqEnd() {return xEnd;}
+	
+	/**
+	 * Return the sequence selected in the SequencePanel.
+	 * @return selected sequence
+	 * @throws Exception Exception thrown if no sequence has been selected.
+	 */
+	public String selectedSequence() throws Exception {
+		if (highlightSequence)
+			return seq.substring(xBeg, xEnd+1);
+		else throw new Exception();
+	}
 	
 	private void drawAxes(Graphics g) {
 		g.setColor(Color.BLACK);
@@ -299,18 +330,48 @@ public class SequencePanel extends JPanel {
 		}
 		if (x_inc > characterWidth) {
 			g.setFont(font);
-			for (int i = 0; i < seq.length(); i++) {
-				switch (seq.charAt(i)) {
-				case 'A': g.setColor(Color.GREEN); break;
-				case 'T': g.setColor(Color.RED); break;
-				case 'C': g.setColor(Color.BLUE); break;
-				case 'G': g.setColor(Color.BLACK); break;
-				case 'a': g.setColor(Color.GREEN); break;
-				case 't': g.setColor(Color.RED); break;
-				case 'c': g.setColor(Color.BLUE); break;
-				case 'g': g.setColor(Color.BLACK); break;
-				default: g.setColor(Color.GRAY); break;
+			if (highlightSequence) {
+				g.setColor(Color.BLACK);
+				Point pBeg = new Point(begLine, 0), pEnd = new Point(endLine, 0);
+				Point2D p2Beg, p2End;
+				try {
+					p2Beg = realCoordinates(pBeg);
+					p2End = realCoordinates(pEnd);
+					xBeg = (int) (p2Beg.getX()-1);
+					xEnd = (int) (p2End.getX()-1);
+					g.fillRect((int) (xBeg * x_inc), y_center, (int) (x_inc * (1 + xEnd - xBeg)), sequenceHeight);
+				} catch (NoninvertibleTransformException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
+			for (int i = 0; i < seq.length(); i++) {
+				if (highlightSequence && i >= xBeg && i <= xEnd) {
+					switch (seq.charAt(i)) {
+						case 'A': g.setColor(Color.RED); break;
+						case 'T': g.setColor(Color.GREEN); break;
+						case 'C': g.setColor(Color.YELLOW); break;
+						case 'G': g.setColor(Color.WHITE); break;
+						case 'a': g.setColor(Color.RED); break;
+						case 't': g.setColor(Color.GREEN); break;
+						case 'c': g.setColor(Color.YELLOW); break;
+						case 'g': g.setColor(Color.WHITE); break;
+						default: g.setColor(Color.GRAY); break;
+					}
+				}
+				else {
+					switch (seq.charAt(i)) {
+						case 'A': g.setColor(Color.GREEN); break;
+						case 'T': g.setColor(Color.RED); break;
+						case 'C': g.setColor(Color.BLUE); break;
+						case 'G': g.setColor(Color.BLACK); break;
+						case 'a': g.setColor(Color.GREEN); break;
+						case 't': g.setColor(Color.RED); break;
+						case 'c': g.setColor(Color.BLUE); break;
+						case 'g': g.setColor(Color.BLACK); break;
+						default: g.setColor(Color.GRAY); break;
+					}
+				}
 			char[] character = {seq.charAt(i)};
 			g.drawString(new String(character), (int) (i * x_inc), y_center + fontMetrics.getAscent());
 			}
