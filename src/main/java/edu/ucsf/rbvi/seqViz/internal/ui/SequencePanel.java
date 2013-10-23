@@ -173,10 +173,12 @@ public class SequencePanel extends JPanel {
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		AntiAlias.antiAliasing((Graphics2D) g);
-		drawAxes(g);
 	//	if (seq != null) drawSequence(g);
 		for (Graphs graph: graphs.values())
 			if (graph.draw) drawLineGraph(g, graph.points, graph.color);
+		g.setColor(Color.WHITE);
+		g.fillRect(0, y_center, width, sequenceHeight);
+		drawAxes(g);
 		if (drawYLine) {
 			g.setColor(Color.BLACK);
 			g.drawLine(begLine, 0, begLine, this.getHeight());
@@ -328,53 +330,54 @@ public class SequencePanel extends JPanel {
 				e.printStackTrace();
 			}
 		}
-		if (x_inc > characterWidth) {
-			g.setFont(font);
-			if (highlightSequence) {
-				g.setColor(Color.BLACK);
-				Point pBeg = new Point(begLine, 0), pEnd = new Point(endLine, 0);
-				Point2D p2Beg, p2End;
-				try {
-					p2Beg = realCoordinates(pBeg);
-					p2End = realCoordinates(pEnd);
-					xBeg = (int) (p2Beg.getX()-1);
-					xEnd = (int) (p2End.getX()-1);
-					g.fillRect((int) (xBeg * x_inc), y_center, (int) (x_inc * (1 + xEnd - xBeg)), sequenceHeight);
-				} catch (NoninvertibleTransformException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+		g.setFont(font);
+		if (highlightSequence) {
+			g.setColor(Color.BLACK);
+			Point pBeg = new Point(begLine, 0), pEnd = new Point(endLine, 0);
+			Point2D p2Beg, p2End;
+			try {
+				p2Beg = realCoordinates(pBeg);
+				p2End = realCoordinates(pEnd);
+				xBeg = (int) (p2Beg.getX()-1);
+				xEnd = (int) (p2End.getX()-1);
+				g.fillRect((int) (xBeg * x_inc), y_center, (int) (x_inc * (1 + xEnd - xBeg)), sequenceHeight);
+			} catch (NoninvertibleTransformException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		for (int i = 0; i < seq.length(); i++) {
+			if (highlightSequence && i >= xBeg && i <= xEnd) {
+				switch (seq.charAt(i)) {
+					case 'A': g.setColor(Color.RED); break;
+					case 'T': g.setColor(Color.GREEN); break;
+					case 'C': g.setColor(Color.YELLOW); break;
+					case 'G': g.setColor(Color.WHITE); break;
+					case 'a': g.setColor(Color.RED); break;
+					case 't': g.setColor(Color.GREEN); break;
+					case 'c': g.setColor(Color.YELLOW); break;
+					case 'g': g.setColor(Color.WHITE); break;
+					default: g.setColor(Color.GRAY); break;
 				}
 			}
-			for (int i = 0; i < seq.length(); i++) {
-				if (highlightSequence && i >= xBeg && i <= xEnd) {
-					switch (seq.charAt(i)) {
-						case 'A': g.setColor(Color.RED); break;
-						case 'T': g.setColor(Color.GREEN); break;
-						case 'C': g.setColor(Color.YELLOW); break;
-						case 'G': g.setColor(Color.WHITE); break;
-						case 'a': g.setColor(Color.RED); break;
-						case 't': g.setColor(Color.GREEN); break;
-						case 'c': g.setColor(Color.YELLOW); break;
-						case 'g': g.setColor(Color.WHITE); break;
-						default: g.setColor(Color.GRAY); break;
-					}
+			else {
+				switch (seq.charAt(i)) {
+					case 'A': g.setColor(Color.GREEN); break;
+					case 'T': g.setColor(Color.RED); break;
+					case 'C': g.setColor(Color.BLUE); break;
+					case 'G': g.setColor(Color.BLACK); break;
+					case 'a': g.setColor(Color.GREEN); break;
+					case 't': g.setColor(Color.RED); break;
+					case 'c': g.setColor(Color.BLUE); break;
+					case 'g': g.setColor(Color.BLACK); break;
+					default: g.setColor(Color.GRAY); break;
 				}
-				else {
-					switch (seq.charAt(i)) {
-						case 'A': g.setColor(Color.GREEN); break;
-						case 'T': g.setColor(Color.RED); break;
-						case 'C': g.setColor(Color.BLUE); break;
-						case 'G': g.setColor(Color.BLACK); break;
-						case 'a': g.setColor(Color.GREEN); break;
-						case 't': g.setColor(Color.RED); break;
-						case 'c': g.setColor(Color.BLUE); break;
-						case 'g': g.setColor(Color.BLACK); break;
-						default: g.setColor(Color.GRAY); break;
-					}
-				}
+			}
 			char[] character = {seq.charAt(i)};
-			g.drawString(new String(character), (int) (i * x_inc), y_center + fontMetrics.getAscent());
-			}
+			if (x_inc > characterWidth)
+				g.drawString(new String(character), (int) (i * x_inc), y_center + fontMetrics.getAscent());
+			else if (x_inc >= 1)
+				g.drawLine((int) ((i * x_inc) + (x_inc / 2)), y_center, (int) ((i * x_inc) + (x_inc / 2)), y_center_lower);
 		}
 	}
 	

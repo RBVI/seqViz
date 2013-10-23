@@ -76,6 +76,7 @@ public class ContigView {
 	private long y_min = 0, y_max = 0, contigLength = 0, binSize;
 	private int width = defaultWidth, height = defaultHeight, widthScale = 1, heightScale = 1, begLine, endLine, characterWidth = 1;
 	private Clipboard clipboard;
+	private String selectedSequence = null;
 	
 /*	public ContigView(ContigsManager manager, String contig) {
 		this.manager = manager;
@@ -363,11 +364,10 @@ public class ContigView {
 				histoPanel2.setDrawYLines(false);
 				StringSelection selection;
 				try {
-					selection = new StringSelection(histoPanel2.selectedSequence());
+					selection = new StringSelection(selectedSequence = histoPanel2.selectedSequence());
 					clipboard.setContents(selection, null);
 				} catch (Exception e2) {
 					// TODO Auto-generated catch block
-					e2.printStackTrace();
 				}
 				histoPanel2.setHighlightSequence(false);
 				if (begLine < endLine) {
@@ -446,12 +446,13 @@ public class ContigView {
 			}
 			
 			public void mouseDragged(MouseEvent e) {
-				histoPanel2.setEndLine(endLine = e.getX());
-				Point2D p = histoPanel2.cartesianCoordinates(new Point(0, 0)),
+				if (e.getX() > begLine)
+					histoPanel2.setEndLine(endLine = e.getX());
+			/*	Point2D p = histoPanel2.cartesianCoordinates(new Point(0, 0)),
 						p2 = histoPanel2.cartesianCoordinates(new Point(200, 0));
 				int diff = (int) (p2.getX() - p.getX());
 				if (begLine + diff <= endLine)
-					histoPanel2.setBegLine(begLine = (endLine - diff));
+					histoPanel2.setBegLine(begLine = (endLine - diff)); */
 				histoPanel2.repaint();
 			}
 		});
