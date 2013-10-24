@@ -24,6 +24,7 @@ import java.awt.event.MouseMotionListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +32,7 @@ import java.util.Random;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import javax.swing.Action;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -38,6 +40,7 @@ import javax.swing.JColorChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JSplitPane;
@@ -65,7 +68,7 @@ public class ContigView {
 	 */
 	private static final long serialVersionUID = -7713836441534331408L;
 	private static final int defaultWidth = 800, defaultHeight = 400;
-	private JButton zoomIn, zoomOut, zoomInY, zoomOutY;
+	private JButton reset, zoomIn, zoomOut, zoomInY, zoomOutY;
 	private JSplitPane splitPane;
 	private JScrollPane histoPane, settingsPane;
 	private JPanel histoPanel, zoomPane, settingsPanel;
@@ -75,6 +78,7 @@ public class ContigView {
 	private ComplementaryGraphs graphs;
 	private long y_min = 0, y_max = 0, contigLength = 0, binSize;
 	private int width = defaultWidth, height = defaultHeight, widthScale = 1, heightScale = 1, begLine, endLine, characterWidth = 1;
+	private double incWidthScale = 1;
 	private Clipboard clipboard;
 	private String selectedSequence = null;
 	
@@ -289,15 +293,28 @@ public class ContigView {
 		zoomPane = new JPanel(new FlowLayout());
 		histoPanel.add(zoomPane, BorderLayout.SOUTH);
 		histoPanel.add(histoPane, BorderLayout.CENTER);
+		reset = new JButton("Reset");
+		reset.addActionListener(new ActionListener() {
+			
+			public void actionPerformed(ActionEvent e) {
+				incWidthScale = defaultWidth / width;
+				widthScale = defaultWidth / width;
+				heightScale = defaultHeight / height;
+				histoPanel2.setSequencePanelSize(defaultWidth, defaultHeight);
+				histoPanel2.revalidate();
+				histoPanel2.repaint();
+			}
+		});
 		zoomIn = new JButton("Zoom In");
 		zoomIn.addActionListener(new ActionListener() {
 			
 			public void actionPerformed(ActionEvent e) {
 				if (width * widthScale < contigLength * characterWidth * 2) {
 					widthScale *= 2;
+					incWidthScale = widthScale;
 					histoPanel2.setSequencePanelSize(width * widthScale, height * heightScale);
+					histoPanel2.revalidate();
 					histoPanel2.repaint();
-					histoPane.revalidate();;
 				}
 			}
 		});
@@ -307,9 +324,10 @@ public class ContigView {
 			public void actionPerformed(ActionEvent e) {
 				if (widthScale > 1) {
 					widthScale /= 2;
+					incWidthScale = widthScale;
 					histoPanel2.setSequencePanelSize(width * widthScale, height * heightScale);
-					histoPanel2.repaint();
 					histoPanel2.revalidate();
+					histoPanel2.repaint();
 				}
 			}
 		});
@@ -320,8 +338,8 @@ public class ContigView {
 				if (height * heightScale < y_max - y_min) {
 					heightScale *= 2;
 					histoPanel2.setSequencePanelSize(width * widthScale, height * heightScale);
-					histoPanel2.repaint();
 					histoPanel2.revalidate();
+					histoPanel2.repaint();
 				}
 			}
 		});
@@ -332,12 +350,13 @@ public class ContigView {
 				if (heightScale > 1) {
 					heightScale /= 2;
 					histoPanel2.setSequencePanelSize(width * widthScale, height * heightScale);
-					histoPanel2.repaint();
 					histoPanel2.revalidate();
+					histoPanel2.repaint();
 				}
 			}
 		});
 		JLabel xAxis = new JLabel("X-Axis Zoom:");
+		zoomPane.add(reset);
 		xAxis.setFont(new Font(Font.DIALOG, Font.PLAIN, 12));
 		zoomPane.add(xAxis);
 		zoomPane.add(zoomIn);
@@ -363,31 +382,47 @@ public class ContigView {
 			public void mouseReleased(MouseEvent e) {
 				histoPanel2.setDrawYLines(false);
 				StringSelection selection;
+				boolean reLoadedPanel = false;
+				double barFactor = 0;
 				try {
 					selection = new StringSelection(selectedSequence = histoPanel2.selectedSequence());
 					clipboard.setContents(selection, null);
 				} catch (Exception e2) {
-					// TODO Auto-generated catch block
+					if (begLine < endLine) {
+						double tempIncWidthScale = incWidthScale * width / (double) (endLine - begLine + 1);
+						barFactor = ((double) begLine) / (double) (width * incWidthScale - (endLine - begLine));
+						if (width * tempIncWidthScale < contigLength * characterWidth * 2) {
+							incWidthScale = tempIncWidthScale;
+							widthScale = (int) incWidthScale;
+							histoPanel2.setSequencePanelSize((int) (width * incWidthScale), height * heightScale);
+							reLoadedPanel = true;
+						}
+					}
 				}
 				histoPanel2.setHighlightSequence(false);
-				if (begLine < endLine) {
+			/*	if (begLine < endLine) {
 					Point d = new Point(begLine, 0);
 					Point d2 = new Point(endLine, 0);
 					try {
 						Point2D p = histoPanel2.realCoordinates(d),
 								p2 = histoPanel2.realCoordinates(d2);
-					/*	JPanel seqView = new SequenceView(network, suid2, (int) p.getX(), (int) p2.getX());
+						JPanel seqView = new SequenceView(network, suid2, (int) p.getX(), (int) p2.getX());
 						JFrame frame = new JFrame(contig);
 						frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 						frame.getContentPane().add(seqView);
 						frame.pack();
-						frame.setVisible(true); */
+						frame.setVisible(true);
 					} catch (NoninvertibleTransformException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}
-				}
+				} */
+				histoPanel2.revalidate();
 				histoPanel2.repaint();
+				if (reLoadedPanel) {
+					ChangeScrollBar change = new ChangeScrollBar(histoPane, barFactor);
+					change.start();
+				}
 			}
 			
 			public void mousePressed(MouseEvent e) {
@@ -458,6 +493,24 @@ public class ContigView {
 		});
 	}
 	
+	private class ChangeScrollBar extends Thread {
+		private JScrollPane b;
+		private double factor;
+		public ChangeScrollBar(JScrollPane scroll, double barFactor) {
+			b = scroll;
+			factor = barFactor;
+		}
+		public void run() {
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			JScrollBar xBar = b.getHorizontalScrollBar();
+			xBar.setValue((int) ((xBar.getMaximum()-xBar.getMinimum()-xBar.getBlockIncrement(1)) * factor));
+		}
+	}
 	/**
 	 * Returns the SplitPane created.
 	 * @return
