@@ -33,6 +33,7 @@ import org.cytoscape.task.read.LoadVizmapFileTaskFactory;
 import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.CyNetworkViewFactory;
 import org.cytoscape.view.model.CyNetworkViewManager;
+import org.cytoscape.view.vizmap.VisualMappingFunction;
 import org.cytoscape.view.vizmap.VisualMappingManager;
 import org.cytoscape.view.vizmap.VisualStyle;
 import org.cytoscape.view.vizmap.VisualStyleFactory;
@@ -101,6 +102,15 @@ public class CyActivator extends AbstractCyActivator {
 						styles.put(vs.getTitle(), vs);
 					}
 		}
+		
+	/*	for (String styleName: styles.keySet()) {
+			System.out.println("Style Name: " + styleName);
+			System.out.println(styles.get(styleName));
+			for (VisualMappingFunction s: styles.get(styleName).getAllVisualMappingFunctions()) {
+				System.out.println("Mapped Column: " + s.getMappingColumnName());
+				System.out.println("Visual Property: " + s.getVisualProperty());
+			}
+		} */
 		
 		// Get current network
 	/*	CyApplicationManager appManager = getService(bc, CyApplicationManager.class);

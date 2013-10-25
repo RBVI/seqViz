@@ -947,10 +947,10 @@ public class ContigsManager {
 			table.getRow(contigs.get(s).node.getSUID()).set(read_cov_hist_rev_log_string, k);
 		}
 		for (String s: contigs.keySet()) {
-			table.getRow(contigs.get(s).node.getSUID()).set(barchart_paired_end_hist_string, "barchart: attributelist=\"paired_end_hist_log\" showlabels=\"false\" colorlist=\"up:blue,down:yellow,zero:black\" range=\"" + paired_end_min + "," + paired_end_max + "\"");
-			table.getRow(contigs.get(s).node.getSUID()).set(barchart_paired_end_rev_hist_string, "barchart: attributelist=\"paired_end_hist_rev_log\" showlabels=\"false\" colorlist=\"up:blue,down:yellow,zero:black\" range=\"" + paired_end_min + "," + paired_end_max + "\"");
-			table.getRow(contigs.get(s).node.getSUID()).set(bartchart_read_cov_hist_string, "barchart: attributelist=\"read_cov_hist_pos_log\" showlabels=\"false\" colorlist=\"up:blue,down:yellow,zero:black\" range=\"" + read_cov_rev_max + "," + read_cov_pos_max + "\"");
-			table.getRow(contigs.get(s).node.getSUID()).set(bartchart_read_cov_rev_hist_string, "barchart: attributelist=\"read_cov_hist_rev_log\" showlabels=\"false\" colorlist=\"up:blue,down:yellow,zero:black\" range=\"" + read_cov_rev_max + "," + read_cov_pos_max + "\"");
+			table.getRow(contigs.get(s).node.getSUID()).set(barchart_paired_end_hist_string, "barchart: attributelist=\"" + paired_end_hist_log_string + "\" showlabels=\"false\" colorlist=\"up:blue,down:yellow,zero:black\" range=\"" + paired_end_min + "," + paired_end_max + "\"");
+			table.getRow(contigs.get(s).node.getSUID()).set(barchart_paired_end_rev_hist_string, "barchart: attributelist=\"" + paired_end_hist_rev_log_string + "\" showlabels=\"false\" colorlist=\"up:blue,down:yellow,zero:black\" range=\"" + paired_end_min + "," + paired_end_max + "\"");
+			table.getRow(contigs.get(s).node.getSUID()).set(bartchart_read_cov_hist_string, "barchart: attributelist=\"" + read_cov_hist_pos_log_string + "\" showlabels=\"false\" colorlist=\"up:blue,down:yellow,zero:black\" range=\"" + read_cov_rev_max + "," + read_cov_pos_max + "\"");
+			table.getRow(contigs.get(s).node.getSUID()).set(bartchart_read_cov_rev_hist_string, "barchart: attributelist=\"" + read_cov_hist_rev_log_string + "\" showlabels=\"false\" colorlist=\"up:blue,down:yellow,zero:black\" range=\"" + read_cov_rev_max + "," + read_cov_pos_max + "\"");
 		}
 	}
 
