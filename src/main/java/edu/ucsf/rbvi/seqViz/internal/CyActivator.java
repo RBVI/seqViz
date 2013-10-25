@@ -117,7 +117,7 @@ public class CyActivator extends AbstractCyActivator {
 		CyNetwork curNetwork = appManager.getCurrentNetwork(); */
 		
 		// Create the context object
-		ContigsManager seqManager = new ContigsManager(bc, style);
+		ContigsManager seqManager = new ContigsManager(getService(bc,CyServiceRegistrar.class), style);
 
 		// Get OS information and set seqManager
 		String OS = System.getProperty("os.name").toLowerCase();

@@ -14,6 +14,7 @@ import org.cytoscape.model.CyNetworkFactory;
 import org.cytoscape.model.CyNetworkManager;
 import org.cytoscape.model.CyNode;
 import org.cytoscape.model.CyTable;
+import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.task.read.LoadVizmapFileTaskFactory;
 import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.CyNetworkViewFactory;
@@ -41,7 +42,7 @@ public class ContigsManager {
 	private HashMap<String,Contig> contigs;
 	private SeqVizSettings settings;
 	private CyNetwork network;
-	private BundleContext bundleContext;
+	private CyServiceRegistrar bundleContext;
 	private VisualStyle vs;
 	private CyNetworkView networkView = null;
 	private int bin, binSize;
@@ -64,13 +65,13 @@ public class ContigsManager {
 	private EdgeStat bridgingReadsAll, bridgingReadsUnique, bridgingReadsBest, bridgingReadsBestUnique;
 	private Histograms histAll, histUnique, histBest, histBestUnique;
 
-	public ContigsManager(BundleContext bc, VisualStyle vs) {
+	public ContigsManager(CyServiceRegistrar bc, VisualStyle vs) {
 		contigs = new HashMap<String, Contig>();
 		readPairs = new HashMap<Long, ReadPair>();
 		readPairList = new ArrayList<ReadPair>();
 		bundleContext = bc;
 		this.vs = vs;
-		CyNetworkFactory networkFactory = (CyNetworkFactory) getService(CyNetworkFactory.class);
+		CyNetworkFactory networkFactory = bundleContext.getService(CyNetworkFactory.class);
 		this.network = networkFactory.createNetwork();
 		complementaryGraphs = new HashMap<String, ComplementaryGraphs>();
 		paired_end_hist = new HashMap<String, double[]>();
@@ -1548,12 +1549,12 @@ public class ContigsManager {
 	 * Display network
 	 */
 	public void displayNetwork() {
-		CyNetworkManager networkManager = (CyNetworkManager) getService(CyNetworkManager.class);
+		CyNetworkManager networkManager = bundleContext.getService(CyNetworkManager.class);
 		networkManager.addNetwork(network);
 		
-		CyNetworkViewFactory networkViewFactory = (CyNetworkViewFactory) getService(CyNetworkViewFactory.class);
+		CyNetworkViewFactory networkViewFactory = bundleContext.getService(CyNetworkViewFactory.class);
 		CyNetworkView myView = networkViewFactory.createNetworkView(network);
-		CyNetworkViewManager networkViewManager = (CyNetworkViewManager) getService(CyNetworkViewManager.class);
+		CyNetworkViewManager networkViewManager = bundleContext.getService(CyNetworkViewManager.class);
 		networkViewManager.addNetworkView(myView);
 		
 		networkView = myView;
@@ -1600,9 +1601,5 @@ public class ContigsManager {
 			read_cov_hist_pos = new HashMap<String, double[]>();
 			read_cov_hist_rev = new HashMap<String, double[]>();
 		}
-	}
-	
-	private Object getService(Class<?> serviceClass) {
-		return bundleContext.getService(bundleContext.getServiceReference(serviceClass.getName()));
 	}
 }
