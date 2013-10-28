@@ -44,7 +44,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.ucsf.rbvi.seqViz.internal.model.ContigsManager;
+import edu.ucsf.rbvi.seqViz.internal.model.DisplayGraphSettings;
 import edu.ucsf.rbvi.seqViz.internal.model.SeqVizSettings;
+import edu.ucsf.rbvi.seqViz.internal.tasks.ChangeDisplayGraphTaskFactory;
 import edu.ucsf.rbvi.seqViz.internal.tasks.ChangeStyleTaskFactory;
 import edu.ucsf.rbvi.seqViz.internal.tasks.MapReadsTaskFactory;
 import edu.ucsf.rbvi.seqViz.internal.tasks.OpenContigViewTaskFactory;
@@ -58,8 +60,11 @@ public class CyActivator extends AbstractCyActivator {
 	private static Logger logger = LoggerFactory
 			.getLogger(edu.ucsf.rbvi.seqViz.internal.CyActivator.class);
 
+	private DisplayGraphSettings graphSettings;
+	
 	public CyActivator() {
 		super();
+		graphSettings = new DisplayGraphSettings();
 	}
 
 	public void start(BundleContext bc) {
@@ -87,7 +92,7 @@ public class CyActivator extends AbstractCyActivator {
 		networkViewManager.addNetworkView(myView); */
 		
 		// Load new Visual Style for seqViz
-		HashMap<String, VisualStyle> styles = new HashMap<String, VisualStyle>();
+		HashMap<String, HashMap<String,VisualStyle>> styles = new HashMap<String, HashMap<String,VisualStyle>>();
 		VisualMappingManager vmmServiceRef = getService(bc,VisualMappingManager.class);
 		InputStream stream = CyActivator.class.getResourceAsStream("/seqVizStyle.xml");
 		VisualStyle style = null;
@@ -98,19 +103,23 @@ public class CyActivator extends AbstractCyActivator {
 					for (VisualStyle vs: vsSet) {
 						vmmServiceRef.addVisualStyle(vs);
 						style = vs;
-						vs.setTitle(vs.getTitle().split("_")[0]);
-						styles.put(vs.getTitle(), vs);
+						String styleTitle, title, graph;
+						vs.setTitle(styleTitle = vs.getTitle().split("_")[0]);
+						String[] styleTitle2 = styleTitle.split(":");
+						title = styleTitle2[0];
+						if (styleTitle2.length == 2)
+							graph = styleTitle2[1];
+						else graph = null;
+						HashMap<String, VisualStyle> thisStyle;
+						if (styles.containsKey(title))
+							thisStyle = styles.get(title);
+						else {
+							thisStyle = new HashMap<String, VisualStyle>();
+							styles.put(title, thisStyle);
+						}
+						thisStyle.put(graph, vs);
 					}
 		}
-		
-	/*	for (String styleName: styles.keySet()) {
-			System.out.println("Style Name: " + styleName);
-			System.out.println(styles.get(styleName));
-			for (VisualMappingFunction s: styles.get(styleName).getAllVisualMappingFunctions()) {
-				System.out.println("Mapped Column: " + s.getMappingColumnName());
-				System.out.println("Visual Property: " + s.getVisualProperty());
-			}
-		} */
 		
 		// Get current network
 	/*	CyApplicationManager appManager = getService(bc, CyApplicationManager.class);
@@ -154,7 +163,7 @@ public class CyActivator extends AbstractCyActivator {
 	
 		// Load visual styles
 		for (String styleName: styles.keySet()) {
-			ChangeStyleTaskFactory changeStyle = new ChangeStyleTaskFactory(/* seqManager, */ styles.get(styleName));
+			ChangeStyleTaskFactory changeStyle = new ChangeStyleTaskFactory(graphSettings, styles.get(styleName));
 			Properties changeStyleProps = new Properties();
 			changeStyleProps.setProperty(PREFERRED_MENU, "Apps.SeqViz.Show Histograms");
 			changeStyleProps.setProperty(TITLE, styleName);
@@ -167,6 +176,27 @@ public class CyActivator extends AbstractCyActivator {
 			// mapReadsProps.setProperty(INSERT_SEPARATOR_BEFORE, "true");
 			changeStyleProps.setProperty(MENU_GRAVITY, "1.0");
 			registerService(bc, changeStyle, NetworkViewTaskFactory.class, changeStyleProps);
+		}
+		
+		// Change settings
+		String [] graphTypes = {null, "best", "best&unique", "unique"};
+		for (String type: graphTypes) {
+			String title;
+			if (type == null) title = "all";
+			else title = type;
+			ChangeDisplayGraphTaskFactory changeDisplay = new ChangeDisplayGraphTaskFactory(graphSettings, type);
+			Properties changeStyleProps = new Properties();
+			changeStyleProps.setProperty(PREFERRED_MENU, "Apps.SeqViz.Change Graph");
+			changeStyleProps.setProperty(TITLE, title);
+			String command = "";
+			for (String s: title.split("&")) command = command + s;
+			changeStyleProps.setProperty(COMMAND, command);
+			changeStyleProps.setProperty(COMMAND_NAMESPACE, "seqViz");
+			changeStyleProps.setProperty(IN_MENU_BAR, "true");
+			// changeStyleProps.setProperty(ENABLE_FOR, "network");
+			// mapReadsProps.setProperty(INSERT_SEPARATOR_BEFORE, "true");
+			changeStyleProps.setProperty(MENU_GRAVITY, "1.0");
+			registerService(bc, changeDisplay, TaskFactory.class, changeStyleProps);
 		}
 		
 		// Menu task factories
