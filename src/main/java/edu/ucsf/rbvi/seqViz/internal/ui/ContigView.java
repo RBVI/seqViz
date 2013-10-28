@@ -50,6 +50,8 @@ import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyTable;
 import org.cytoscape.view.model.CyNetworkView;
 
+import edu.ucsf.rbvi.seqViz.internal.events.DisplayGraphEvent;
+import edu.ucsf.rbvi.seqViz.internal.events.DisplayGraphEventListener;
 import edu.ucsf.rbvi.seqViz.internal.model.ComplementaryGraphs;
 import edu.ucsf.rbvi.seqViz.internal.model.Contig;
 import edu.ucsf.rbvi.seqViz.internal.model.ContigsManager;
@@ -61,7 +63,7 @@ import edu.ucsf.rbvi.seqViz.internal.model.ContigsManager;
  * @author aywu
  *
  */
-public class ContigView {
+public class ContigView implements DisplayGraphEventListener {
 
 	/**
 	 * 
@@ -81,65 +83,6 @@ public class ContigView {
 	private double incWidthScale = 1;
 	private Clipboard clipboard;
 	private String selectedSequence = null;
-	
-/*	public ContigView(ContigsManager manager, String contig) {
-		this.manager = manager;
-		this.contig = manager.getContig(contig);
-		graphs = manager.createBpGraph(contig);
-		
-		for (long [] d: graphs.pos.values())
-			for (int i = 0; i < d.length; i++)
-				y_max = d[i] > y_max ? d[i]: y_max;
-		for (long [] d: graphs.rev.values())
-			for (int i = 0; i < d.length; i++)
-				y_min = d[i] > y_min ? d[i]: y_min;
-		y_min = - y_min;
-		
-		histoPanel2 = new HistoPanel(800, 400, 0, this.contig.sequence().length(), y_min, y_max);
-		histoPane = new JScrollPane(histoPanel2);
-		histoPanel = new JPanel();
-		histoPanel.setMinimumSize(new Dimension(800,400));
-		histoPanel.setLayout(new BorderLayout());
-		zoomPane = new JPanel(new FlowLayout());
-		histoPanel.add(zoomPane, BorderLayout.SOUTH);
-		histoPanel.add(histoPane, BorderLayout.CENTER);
-		zoomIn = new JButton("Zoom In");
-		zoomOut = new JButton("Zoom Out");
-		left = new JButton("<<<");
-		right = new JButton(">>>");
-		zoomPane.add(left);
-		zoomPane.add(zoomIn);
-		zoomPane.add(zoomOut);
-		zoomPane.add(right);
-
-		settingsPane = new JScrollPane();
-		settingsPane.setMaximumSize(new Dimension(300,400));
-		
-		splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, histoPanel, settingsPane);
-		Dimension splitPaneSize = new Dimension(1100,400);
-		splitPane.setPreferredSize(splitPaneSize);
-		splitPane.setOneTouchExpandable(true);
-		setPreferredSize(splitPaneSize);
-		
-		for (String s: graphs.pos.keySet()) {
-			long[] d = graphs.pos.get(s);
-			double[] y = new double[d.length], x = new double[d.length];
-			for (int i = 0; i < y.length; i++) {
-				y[i] = d[i];
-				x[i] = i + 1;
-			}
-			histoPanel2.addGraph(s, Color.BLUE, x, y);
-		}
-		for (String s: graphs.rev.keySet()) {
-			long[] d = graphs.rev.get(s);
-			double[] y = new double[d.length], x = new double[d.length];
-			for (int i = 0; i < y.length; i++) {
-				y[i] = -d[i];
-				x[i] = i + 1;
-			}
-			histoPanel2.addGraph(s + " reverse", Color.YELLOW, x, y);
-		}
-	} */
 	
 	/**
 	 * Create a ContigView object.
@@ -516,4 +459,9 @@ public class ContigView {
 	 * @return
 	 */
 	public JSplitPane splitPane() {return splitPane;}
+	
+	public void graphSelectionChange(DisplayGraphEvent event) {
+		System.out.println("ContigView changed");
+		System.out.println(this);
+	}
 }

@@ -4,16 +4,17 @@ import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.ObservableTask;
 import org.cytoscape.work.TaskMonitor;
 
+import edu.ucsf.rbvi.seqViz.internal.events.FireDisplayGraphEvent;
 import edu.ucsf.rbvi.seqViz.internal.model.DisplayGraphSettings;
 
 public class ChangeDisplayGraphTask extends AbstractTask implements
 		ObservableTask {
 
-	private DisplayGraphSettings settings;
+	private FireDisplayGraphEvent settings;
 	private String graph;
 	
-	public ChangeDisplayGraphTask(DisplayGraphSettings graphSettings, String graph) {
-		settings = graphSettings;
+	public ChangeDisplayGraphTask(FireDisplayGraphEvent graphEvent, String graph) {
+		settings = graphEvent;
 		this.graph = graph;
 	}
 	
@@ -24,7 +25,8 @@ public class ChangeDisplayGraphTask extends AbstractTask implements
 
 	@Override
 	public void run(TaskMonitor arg0) throws Exception {
-		settings.graphSelection = graph;
+		settings.getDisplayGraphEvent().getDisplayGraphSettings().graphSelection = graph;
+		settings.fireGraphSelectionChange();
 	}
 
 }

@@ -38,15 +38,22 @@ import org.cytoscape.view.vizmap.VisualMappingManager;
 import org.cytoscape.view.vizmap.VisualStyle;
 import org.cytoscape.view.vizmap.VisualStyleFactory;
 import org.cytoscape.work.TaskFactory;
+import org.cytoscape.work.TaskIterator;
+import org.cytoscape.work.TaskManager;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import edu.ucsf.rbvi.seqViz.internal.events.DisplayGraphEvent;
+import edu.ucsf.rbvi.seqViz.internal.events.DisplayGraphEventListener;
+import edu.ucsf.rbvi.seqViz.internal.events.FireDisplayGraphEvent;
 import edu.ucsf.rbvi.seqViz.internal.model.ContigsManager;
 import edu.ucsf.rbvi.seqViz.internal.model.DisplayGraphSettings;
 import edu.ucsf.rbvi.seqViz.internal.model.SeqVizSettings;
+import edu.ucsf.rbvi.seqViz.internal.tasks.ChangeDisplayGraphTask;
 import edu.ucsf.rbvi.seqViz.internal.tasks.ChangeDisplayGraphTaskFactory;
+import edu.ucsf.rbvi.seqViz.internal.tasks.ChangeStyleTask;
 import edu.ucsf.rbvi.seqViz.internal.tasks.ChangeStyleTaskFactory;
 import edu.ucsf.rbvi.seqViz.internal.tasks.MapReadsTaskFactory;
 import edu.ucsf.rbvi.seqViz.internal.tasks.OpenContigViewTaskFactory;
@@ -178,13 +185,24 @@ public class CyActivator extends AbstractCyActivator {
 			registerService(bc, changeStyle, NetworkViewTaskFactory.class, changeStyleProps);
 		}
 		
-		// Change settings
+		// Change display graph settings
+		DisplayGraphEvent event = new DisplayGraphEvent(graphSettings);
+		event.setDisplayGraphSettings(graphSettings);
+		FireDisplayGraphEvent graphEvent = new FireDisplayGraphEvent(event);
+		final TaskManager taskManager = getService(bc, TaskManager.class);
+		final CyApplicationManager applicationManager = getService(bc, CyApplicationManager.class);
+		graphEvent.addDisplayGraphEventListener(new DisplayGraphEventListener() {
+			
+			public void graphSelectionChange(DisplayGraphEvent event) {
+				taskManager.execute(new TaskIterator(new ChangeStyleTask(applicationManager.getCurrentNetworkView(), graphSettings, graphSettings.networkViewSetting)));
+			}
+		});
 		String [] graphTypes = {null, "best", "best&unique", "unique"};
 		for (String type: graphTypes) {
 			String title;
 			if (type == null) title = "all";
 			else title = type;
-			ChangeDisplayGraphTaskFactory changeDisplay = new ChangeDisplayGraphTaskFactory(graphSettings, type);
+			ChangeDisplayGraphTaskFactory changeDisplay = new ChangeDisplayGraphTaskFactory(graphEvent, type);
 			Properties changeStyleProps = new Properties();
 			changeStyleProps.setProperty(PREFERRED_MENU, "Apps.SeqViz.Change Graph");
 			changeStyleProps.setProperty(TITLE, title);
@@ -237,7 +255,7 @@ public class CyActivator extends AbstractCyActivator {
 		mapReadsProps.setProperty(MENU_GRAVITY, "8.0");
 		registerService(bc, mapReadsTask, TaskFactory.class, mapReadsProps);
 		
-		OpenContigViewTaskFactory contigViewTaskFactory = new OpenContigViewTaskFactory(seqManager);
+		OpenContigViewTaskFactory contigViewTaskFactory = new OpenContigViewTaskFactory(seqManager, graphEvent);
 		Properties contigViewProps = new Properties();
 		contigViewProps.setProperty(PREFERRED_MENU, "Apps.SeqViz");
 		contigViewProps.setProperty(TITLE, "Open Contig View");
