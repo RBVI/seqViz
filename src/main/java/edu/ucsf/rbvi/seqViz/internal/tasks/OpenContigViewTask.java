@@ -43,6 +43,7 @@ public class OpenContigViewTask extends AbstractNodeViewTask {
 	//	ContigView panel = new ContigView(manager, contig);
 		final ContigView panel = new ContigView(cyNetwork, suid);
 		event.addDisplayGraphEventListener(panel);
+		event.fireGraphSelectionChange();
 		JFrame frame = new JFrame(contig);
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		frame.getContentPane().add(panel.splitPane());

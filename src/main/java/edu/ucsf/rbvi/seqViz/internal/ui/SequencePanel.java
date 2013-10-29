@@ -30,7 +30,7 @@ public class SequencePanel extends JPanel {
 	private double x_inc, y_inc, x_min, x_max, y_min, y_max;
 	private AffineTransform transform, transformNeg;
 	private HashMap<String, Graphs> graphs;
-	private String seq = null;
+	private String seq = null, selectedGraph = null;
 	private Font seqFont;
 	private FontMetrics fontMetrics;
 	
@@ -175,7 +175,7 @@ public class SequencePanel extends JPanel {
 		AntiAlias.antiAliasing((Graphics2D) g);
 	//	if (seq != null) drawSequence(g);
 		for (Graphs graph: graphs.values())
-			if (graph.draw) drawLineGraph(g, graph.points, graph.color);
+			if (graph.draw && graph.points.containsKey(selectedGraph)) drawLineGraph(g, graph.points.get(selectedGraph), graph.color);
 		g.setColor(Color.WHITE);
 		g.fillRect(0, y_center, width, sequenceHeight);
 		drawAxes(g);
@@ -211,7 +211,12 @@ public class SequencePanel extends JPanel {
 	 * @param y y-coordinates of the name of the histogram.
 	 */
 	public void addGraph(String name, Color c, double[] x, double[] y) {
-		graphs.put(name, new Graphs(c, x, y));
+		if (graphs.containsKey(name)) {
+			Graphs getGraph = graphs.get(name);
+			getGraph.addSubGraph(c == null ? getGraph.color : c, x, y);
+		}
+		else
+			graphs.put(name, new Graphs(c, x, y));
 	}
 	
 	/**
@@ -298,6 +303,12 @@ public class SequencePanel extends JPanel {
 			return seq.substring(xBeg, xEnd+1);
 		else throw new Exception();
 	}
+	
+	/**
+	 * Set the graph to display.
+	 * @param g Graph that is displayed.
+	 */
+	public void setGraph(String g) {selectedGraph = g;}
 	
 	private void drawAxes(Graphics g) {
 		g.setColor(Color.BLACK);
@@ -403,14 +414,18 @@ public class SequencePanel extends JPanel {
 	private class Graphs {
 		public boolean draw;
 		public Color color;
-		public double[] points;
+		public HashMap<String, double[]> points;
 		public Graphs(Color c, double[] p) {
 			draw = true;
 			color = c;
-			points = p;
+			points = new HashMap<String, double[]>();
 		}
 		public Graphs(Color c, double[] x, double[] y) {
 			draw = true;
+			points = new HashMap<String, double[]>();
+			addSubGraph(c,x,y);
+		}
+		public void addSubGraph(Color c, double[] x, double[] y) {
 			color = c;
 			if (x.length == y.length) {
 				double[] xy = new double[x.length + y.length];
@@ -418,7 +433,7 @@ public class SequencePanel extends JPanel {
 					xy[2 * i] = x[i];
 					xy[2 * i + 1] = y[i];
 				}
-				points = xy;
+				points.put(selectedGraph, xy);
 			}
 		}
 	}

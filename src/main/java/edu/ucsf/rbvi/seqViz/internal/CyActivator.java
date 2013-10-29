@@ -68,6 +68,7 @@ public class CyActivator extends AbstractCyActivator {
 			.getLogger(edu.ucsf.rbvi.seqViz.internal.CyActivator.class);
 
 	private DisplayGraphSettings graphSettings;
+	public static final String[] graphTypes = {null, "best", "best&unique", "unique"};
 	
 	public CyActivator() {
 		super();

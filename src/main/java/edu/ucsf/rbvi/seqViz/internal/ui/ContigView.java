@@ -50,6 +50,7 @@ import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyTable;
 import org.cytoscape.view.model.CyNetworkView;
 
+import edu.ucsf.rbvi.seqViz.internal.CyActivator;
 import edu.ucsf.rbvi.seqViz.internal.events.DisplayGraphEvent;
 import edu.ucsf.rbvi.seqViz.internal.events.DisplayGraphEventListener;
 import edu.ucsf.rbvi.seqViz.internal.model.ComplementaryGraphs;
@@ -131,13 +132,23 @@ public class ContigView implements DisplayGraphEventListener {
 			if (labelLength < (tempLength = s.split(":")[1].length() + s.split(":")[2].length() + 1))
 				labelLength = tempLength;
 		for (final String s: graphs) {
-			List<Long> graph = table.getRow(network.getSUID()).getList(s, Long.class);
-			double[] y = new double[graph.size()], x = new double[graph.size()];
-			int i = 0;
-			for (Long l: graph) {
-				y[i] = l;
-				x[i] = i * binSize + 1;
-				i++;
+			HashMap<String, List<Long>> allGraph = new HashMap<String, List<Long>>();
+			HashMap<String, double[]> allY = new HashMap<String, double[]>(), allX = new HashMap<String, double[]>();
+			for (String type: CyActivator.graphTypes) {
+				List<Long> graph = table.getRow(network.getSUID()).getList(s + (type == null ? "" : ":" + type), Long.class);
+				if (graph != null) {
+					double[] y = new double[graph.size()];
+					double[] x = new double[graph.size()];
+					int i = 0;
+					for (Long l: graph) {
+						y[i] = l;
+						x[i] = i * binSize + 1;
+						i++;
+					}
+					allGraph.put(type, graph);
+					allY.put(type, y);
+					allX.put(type, x);
+				}
 			}
 			final Color randomColor;
 			JPanel newGraphColor = new JPanel();
@@ -154,7 +165,13 @@ public class ContigView implements DisplayGraphEventListener {
 					sameContigGraphRev = newGraphColor;
 				randomColor = Color.GRAY;
 			}
-			histoPanel2.addGraph(s, randomColor, x, y);
+			for (String t: CyActivator.graphTypes) {
+				if (allX.containsKey(t) && allY.containsKey(t)) {
+					histoPanel2.setGraph(t);
+					histoPanel2.addGraph(s, randomColor, allX.get(t), allY.get(t));
+				}
+			}
+			histoPanel2.setGraph(null);
 		//	JLabel nodeTitle = new JLabel(s.split(":")[1] + "-" + s.split(":")[2]);
 		//	nodeTitle.setFont(new Font(Font.DIALOG, Font.PLAIN, 12));
 		//	newGraphColor.add(nodeTitle);
@@ -461,7 +478,7 @@ public class ContigView implements DisplayGraphEventListener {
 	public JSplitPane splitPane() {return splitPane;}
 	
 	public void graphSelectionChange(DisplayGraphEvent event) {
-		System.out.println("ContigView changed");
-		System.out.println(this);
+		histoPanel2.setGraph(event.getDisplayGraphSettings().graphSelection);
+		histoPanel2.repaint();
 	}
 }
