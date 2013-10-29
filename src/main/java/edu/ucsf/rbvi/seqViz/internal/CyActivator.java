@@ -68,7 +68,8 @@ public class CyActivator extends AbstractCyActivator {
 			.getLogger(edu.ucsf.rbvi.seqViz.internal.CyActivator.class);
 
 	private DisplayGraphSettings graphSettings;
-	
+	public static final String [] graphTypes = {null, "best", "best&unique", "unique"};
+
 	public CyActivator() {
 		super();
 		graphSettings = new DisplayGraphSettings();
@@ -197,7 +198,6 @@ public class CyActivator extends AbstractCyActivator {
 				taskManager.execute(new TaskIterator(new ChangeStyleTask(applicationManager.getCurrentNetworkView(), graphSettings, graphSettings.networkViewSetting)));
 			}
 		});
-		String [] graphTypes = {null, "best", "best&unique", "unique"};
 		for (String type: graphTypes) {
 			String title;
 			if (type == null) title = "all";

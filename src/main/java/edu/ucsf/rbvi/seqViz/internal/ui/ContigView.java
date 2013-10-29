@@ -50,6 +50,7 @@ import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyTable;
 import org.cytoscape.view.model.CyNetworkView;
 
+import edu.ucsf.rbvi.seqViz.internal.CyActivator;
 import edu.ucsf.rbvi.seqViz.internal.events.DisplayGraphEvent;
 import edu.ucsf.rbvi.seqViz.internal.events.DisplayGraphEventListener;
 import edu.ucsf.rbvi.seqViz.internal.model.ComplementaryGraphs;
@@ -83,6 +84,10 @@ public class ContigView implements DisplayGraphEventListener {
 	private double incWidthScale = 1;
 	private Clipboard clipboard;
 	private String selectedSequence = null;
+	private String graphSelected = null;
+	private HashMap<String, Boolean> drawGraph;
+	private CyTable table;
+	private CyNetwork network;
 	
 	/**
 	 * Create a ContigView object.
@@ -92,20 +97,20 @@ public class ContigView implements DisplayGraphEventListener {
 	 */
 	public ContigView(CyNetworkView networkView, Long suid) {
 		final CyNetworkView networkViewFinal = networkView;
-		final CyNetwork network = networkView.getModel();
+		network = networkView.getModel();
 		final Long suid2 = suid;
-		CyTable table = network.getDefaultNetworkTable();
+		table = network.getDefaultNetworkTable();
 		final CyTable nodeTable = network.getDefaultNodeTable();
 		final String contig = nodeTable.getRow(suid).get(CyNetwork.NAME, String.class);
 		List<String> graphs = table.getRow(network.getSUID()).getList(contig + ":graphColumns", String.class);
 	//	JPanel[] graphColor = new JPanel[graphs.size()];
 		SortedMap<String, JPanel> graphColor = new TreeMap<String, JPanel>();
 		final HashMap<String, Long> contigMap = new HashMap<String, Long>();
+		drawGraph = new HashMap<String, Boolean>();
 		JCheckBox[] displayGraph = new JCheckBox[graphs.size()];
 		JPanel sameContigGraphPos = null, sameContigGraphRev = null;
 		clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 		binSize = table.getRow(network.getSUID()).get("graphBinSize", Long.class);
-		Random random = new Random(70);
 		contigLength = nodeTable.getRow(suid).get("length", Long.class);
 		for (long nodeID: nodeTable.getPrimaryKey().getValues(Long.class)) {
 			contigMap.put(nodeTable.getRow(nodeID).get(CyNetwork.NAME, String.class), nodeID);
@@ -130,18 +135,34 @@ public class ContigView implements DisplayGraphEventListener {
 		for (String s: graphs)
 			if (labelLength < (tempLength = s.split(":")[1].length() + s.split(":")[2].length() + 1))
 				labelLength = tempLength;
-		for (final String s: graphs) {
-			List<Long> graph = table.getRow(network.getSUID()).getList(s, Long.class);
-			double[] y = new double[graph.size()], x = new double[graph.size()];
-			int i = 0;
-			for (Long l: graph) {
-				y[i] = l;
-				x[i] = i * binSize + 1;
-				i++;
+		Random random;
+		for (String type: CyActivator.graphTypes) {
+			random = new Random(70);
+			graphs = table.getRow(network.getSUID()).getList(contig + ":graphColumns" + (type == null ? "" : ":" + type), String.class);
+			for (final String s: graphs) {
+				List<Long> graph = table.getRow(network.getSUID()).getList(s, Long.class);
+				double[] y = new double[graph.size()], x = new double[graph.size()];
+				int i = 0;
+				for (Long l: graph) {
+					y[i] = l;
+					x[i] = i * binSize + 1;
+					i++;
+				}
+				final Color randomColor;
+				if (! s.split(":")[0].equals(s.split(":")[1]))
+					randomColor = new Color(((int) (random.nextFloat() * 4)) * 64, ((int) (random.nextFloat() * 4)) * 64, ((int) (random.nextFloat() * 4)) * 64);
+				else
+					randomColor = Color.GRAY;
+				histoPanel2.addGraph(s, randomColor, x, y);
+				if (type != null || randomColor.equals(Color.GRAY))
+					histoPanel2.setGraphVisible(s, false);
+				j++;
 			}
+		}
+		random = new Random(70);
+		for (final String s: graphs) {
 			final Color randomColor;
 			JPanel newGraphColor = new JPanel();
-		//	graphColor[j] = newGraphColor;
 			newGraphColor.setLayout(new FlowLayout());
 			if (! s.split(":")[0].equals(s.split(":")[1])) {
 				randomColor = new Color(((int) (random.nextFloat() * 4)) * 64, ((int) (random.nextFloat() * 4)) * 64, ((int) (random.nextFloat() * 4)) * 64);
@@ -154,14 +175,7 @@ public class ContigView implements DisplayGraphEventListener {
 					sameContigGraphRev = newGraphColor;
 				randomColor = Color.GRAY;
 			}
-			histoPanel2.addGraph(s, randomColor, x, y);
-		//	JLabel nodeTitle = new JLabel(s.split(":")[1] + "-" + s.split(":")[2]);
-		//	nodeTitle.setFont(new Font(Font.DIALOG, Font.PLAIN, 12));
-		//	newGraphColor.add(nodeTitle);
-		//	settingsPanel.add(nodeTitle);
 			final JButton colorButton = new JButton();
-		//	newGraphColor.add(colorButton = new JButton("Graph Color"));
-		//	settingsPanel.add(colorButton = new JButton("Graph Color"));
 			colorButton.setBackground(randomColor);
 			colorButton.setToolTipText("Change the color of this graph.");
 			colorButton.addActionListener(new ActionListener() {
@@ -169,7 +183,8 @@ public class ContigView implements DisplayGraphEventListener {
 				public void actionPerformed(ActionEvent e) {
 					Color c = JColorChooser.showDialog(splitPane,
 							"Choose color of graph", colorButton.getBackground());
-					histoPanel2.changeColor(s, c);
+					for (String t: CyActivator.graphTypes)
+						histoPanel2.changeColor(s + (t == null ? "" : ":" + t), c);
 					colorButton.setBackground(c);
 					histoPanel2.repaint();
 				}
@@ -182,23 +197,27 @@ public class ContigView implements DisplayGraphEventListener {
 				else labelString[i1] = ' ';
 			}
 			final JCheckBox b = new JCheckBox(new String(labelString));
-			displayGraph[j] = b;
 			b.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
 			b.setToolTipText("Toggle on/off this graph.");
 			if (sameContigGraphPos == newGraphColor || sameContigGraphRev == newGraphColor) {
 				b.setSelected(false);
 				histoPanel2.setGraphVisible(s, false);
+				drawGraph.put(s, false);
 			}
 			else {
 				b.setSelected(true);
 				histoPanel2.setGraphVisible(s, true);
+				drawGraph.put(s, false);
 			}
 			if (contigMap.containsKey(s.split(":")[1]))
 				nodeTable.getRow(contigMap.get(s.split(":")[1])).set(CyNetwork.SELECTED, b.isSelected());
 			b.addItemListener(new ItemListener() {
 				
 				public void itemStateChanged(ItemEvent e) {
-					histoPanel2.setGraphVisible(s, b.isSelected());
+					drawGraph.put(s, b.isSelected());
+					for (String t: CyActivator.graphTypes)
+						histoPanel2.setGraphVisible(s + (t == null ? "" : ":" + t), false);
+					histoPanel2.setGraphVisible(s + (graphSelected == null ? "" : ":" + graphSelected), b.isSelected());
 					histoPanel2.repaint();
 					if (contigMap.containsKey(s.split(":")[1]))
 						nodeTable.getRow(contigMap.get(s.split(":")[1])).set(CyNetwork.SELECTED, b.isSelected());
@@ -206,9 +225,7 @@ public class ContigView implements DisplayGraphEventListener {
 				}
 			});
 			newGraphColor.add(b);
-		//	settingsPanel.add(b);
 			newGraphColor.add(colorButton);
-			j++;
 		}
 		networkViewFinal.updateView();
 		settingsPanel.add(sameContigGraphPos);
@@ -461,7 +478,13 @@ public class ContigView implements DisplayGraphEventListener {
 	public JSplitPane splitPane() {return splitPane;}
 	
 	public void graphSelectionChange(DisplayGraphEvent event) {
-		System.out.println("ContigView changed");
-		System.out.println(this);
+		graphSelected = event.getDisplayGraphSettings().graphSelection;
+		List<String> graphs = table.getRow(network.getSUID()).getList(contig + ":graphColumns", String.class);
+		for (String s: graphs) {
+			for (String t: CyActivator.graphTypes)
+				histoPanel2.setGraphVisible(s + (t == null ? "" : ":" + t), false);
+			histoPanel2.setGraphVisible(s + (graphSelected == null ? "" : ":" + graphSelected), drawGraph.get(s));
+		}
+		histoPanel2.repaint();
 	}
 }
