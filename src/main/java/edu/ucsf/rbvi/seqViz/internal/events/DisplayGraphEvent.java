@@ -13,10 +13,18 @@ public class DisplayGraphEvent extends EventObject {
 		// TODO Auto-generated constructor stub
 	}
 	
+	/**
+	 * Set the DisplayGraphicSettings object.
+	 * @param s DisplayGraphSettings object.
+	 */
 	public void setDisplayGraphSettings(DisplayGraphSettings s) {
 		settings = s;
 	}
 	
+	/**
+	 * Get the DisplayGraphSettings object.
+	 * @return DisplayGraphSettings object for this event.
+	 */
 	public DisplayGraphSettings getDisplayGraphSettings() {
 		return settings;
 	}
