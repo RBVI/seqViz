@@ -26,6 +26,11 @@ import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,12 +38,14 @@ import java.util.Random;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import javax.imageio.ImageIO;
 import javax.swing.Action;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -47,6 +54,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JSplitPane;
 import javax.swing.SwingConstants;
+import javax.swing.filechooser.FileFilter;
 
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyTable;
@@ -73,7 +81,7 @@ public class ContigView implements DisplayGraphEventListener {
 	 */
 	private static final long serialVersionUID = -7713836441534331408L;
 	private static final int defaultWidth = 800, defaultHeight = 400, buttonWidth = 20, buttonHeight = 10;
-	private JButton reset, zoomIn, zoomOut, zoomInY, zoomOutY;
+	private JButton reset, zoomIn, zoomOut, zoomInY, zoomOutY, export, exportData;
 	private JSplitPane splitPane;
 	private JScrollPane histoPane, settingsPane;
 	private JPanel histoPanel, zoomPane, settingsPanel;
@@ -179,6 +187,7 @@ public class ContigView implements DisplayGraphEventListener {
 			Graphics2D g2 = image.createGraphics();
 			g2.setColor(randomColor);
 			g2.fillRect(0, 0, buttonWidth, buttonHeight);
+			g2.dispose();
 			ImageIcon buttonColor = new ImageIcon(image);
 			colorButton.setIcon(buttonColor);
 			colorButton.setBackground(randomColor);
@@ -192,6 +201,7 @@ public class ContigView implements DisplayGraphEventListener {
 					Graphics2D g2 = image.createGraphics();
 					g2.setColor(c);
 					g2.fillRect(0, 0, buttonWidth, buttonHeight);
+					g2.dispose();
 					ImageIcon buttonColor = new ImageIcon(image);
 					histoPanel2.changeColor(s, c);
 					colorButton.setIcon(buttonColor);
@@ -323,6 +333,66 @@ public class ContigView implements DisplayGraphEventListener {
 				}
 			}
 		});
+		export = new JButton("Export Image");
+		export.addActionListener(new ActionListener() {
+			
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser saveImage = new JFileChooser();
+				saveImage.addChoosableFileFilter(new ImageFilter());
+				saveImage.setAcceptAllFileFilterUsed(false);
+				if (JFileChooser.APPROVE_OPTION == saveImage.showSaveDialog(splitPane)) {
+					File outFile = saveImage.getSelectedFile();
+					BufferedImage image = new BufferedImage(histoPanel2.getWidth(), histoPanel2.getHeight(), BufferedImage.TYPE_INT_ARGB);
+					Graphics2D g = image.createGraphics();
+					histoPanel2.paint(g);
+					g.dispose();
+					try {
+						ImageIO.write(image, "png", outFile);
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+		});
+		exportData = new JButton("Export Data");
+		exportData.addActionListener(new ActionListener() {
+			
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser saveData = new JFileChooser();
+				if (JFileChooser.APPROVE_OPTION == saveData.showSaveDialog(splitPane)) {
+					File outFile = saveData.getSelectedFile();
+					HashMap<String, double[]> x = histoPanel2.getSelectedGraphsX();
+					HashMap<String, double[]> y = histoPanel2.getSelectedGraphsY();
+					try {
+						PrintWriter writer = new PrintWriter(outFile);
+						int graphLength = 0;
+						boolean first = true;
+						for (String s: x.keySet()) {
+							if (!first) writer.print(",");
+							writer.print("\"" + s + ":position\"," + s + ":coverage");
+							first = false;
+							if (x.get(s).length > graphLength) graphLength = x.get(s).length;
+						}
+						writer.print("\n");
+						for (int i = 0; i < graphLength; i++) {
+							first = true;
+							for (String s: x.keySet()) {
+								if (!first) writer.print(",");
+								if (x.get(s).length > i)
+									writer.print("\"" + x.get(s)[i] + "\"," + y.get(s)[i] + "\"");
+								else
+									writer.print("\"\"");
+								first = false;
+							}
+							writer.write("\n");
+						}
+						writer.close();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+		});
 		JLabel xAxis = new JLabel("X-Axis Zoom:");
 		zoomPane.add(reset);
 		xAxis.setFont(new Font(Font.DIALOG, Font.PLAIN, 12));
@@ -334,6 +404,8 @@ public class ContigView implements DisplayGraphEventListener {
 		zoomPane.add(yAxis);
 		zoomPane.add(zoomInY);
 		zoomPane.add(zoomOutY);
+		zoomPane.add(export);
+		zoomPane.add(exportData);
 
 	//	for (int i = 0; i < graphColor.length; i++)
 	//		settingsPanel.add(graphColor[i]);
@@ -488,5 +560,60 @@ public class ContigView implements DisplayGraphEventListener {
 	public void graphSelectionChange(DisplayGraphEvent event) {
 		histoPanel2.setGraph(event.getDisplayGraphSettings().graphSelection);
 		histoPanel2.repaint();
+	}
+	
+	private class Utils {
+
+	    public final static String jpeg = "jpeg";
+	    public final static String jpg = "jpg";
+	    public final static String gif = "gif";
+	    public final static String tiff = "tiff";
+	    public final static String tif = "tif";
+	    public final static String png = "png";
+
+	    /*
+	     * Get the extension of a file.
+	     */  
+	    public String getExtension(File f) {
+	        String ext = null;
+	        String s = f.getName();
+	        int i = s.lastIndexOf('.');
+
+	        if (i > 0 &&  i < s.length() - 1) {
+	            ext = s.substring(i+1).toLowerCase();
+	        }
+	        return ext;
+	    }
+	}
+	
+	private class ImageFilter extends FileFilter {
+		 
+	    //Accept all directories and all gif, jpg, tiff, or png files.
+	    public boolean accept(File f) {
+	        if (f.isDirectory()) {
+	            return true;
+	        }
+	        Utils util = new Utils();
+	        String extension = util.getExtension(f);
+	        if (extension != null) {
+	            if (extension.equals(Utils.tiff) ||
+	                extension.equals(Utils.tif) ||
+	                extension.equals(Utils.gif) ||
+	                extension.equals(Utils.jpeg) ||
+	                extension.equals(Utils.jpg) ||
+	                extension.equals(Utils.png)) {
+	                    return true;
+	            } else {
+	                return false;
+	            }
+	        }
+	 
+	        return false;
+	    }
+	 
+	    //The description of this filter
+	    public String getDescription() {
+	        return "Image File";
+	    }
 	}
 }

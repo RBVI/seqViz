@@ -35,7 +35,7 @@ public class SequencePanel extends JPanel {
 	private FontMetrics fontMetrics;
 	
 	/**
-	 * Create a HistoPanel. Creates a panel on the screen the size of width X height, with scales
+	 * Create a SequencePanel. Creates a panel on the screen the size of width X height, with scales
 	 * determined by the parameters x_min, x_max, y_min and y_max.
 	 * @param width width of the panel (pixels)
 	 * @param height height of the panel (pixel)
@@ -78,7 +78,7 @@ public class SequencePanel extends JPanel {
 	}
 	
 	/**
-	 * Resize the HistoPanel.
+	 * Resize the SequencePanel.
 	 * @param width width of the panel (pixels)
 	 * @param height height of the panel (pixel)
 	 */
@@ -87,7 +87,7 @@ public class SequencePanel extends JPanel {
 	}
 	
 	/**
-	 * Change the x and y axes of the HistoPanel.
+	 * Change the x and y axes of the SequencePanel.
 	 * @param x_min lower limit of the x-axis
 	 * @param x_max upper limit of the x-axis
 	 * @param y_min lower limit of the y-axis
@@ -203,7 +203,7 @@ public class SequencePanel extends JPanel {
 	}
 	
 	/**
-	 * Add histogram to the HistoPanel. If the name is the same as a previous histogram, the
+	 * Add histogram to the SequencePanel. If the name is the same as a previous histogram, the
 	 * previous histogram is overwritten by the new one.
 	 * @param name Name of the histogram.
 	 * @param c Color the histogram.
@@ -220,7 +220,47 @@ public class SequencePanel extends JPanel {
 	}
 	
 	/**
-	 * Change color of a histogram already in HistoPanel.
+	 * Get the X coordinates of graphs selected to be drawn in this panel.
+	 * @return A HashMap<String, double[]> where the key is the name of the graph
+	 * and the value are the value of the X coordinates.
+	 */
+	public HashMap<String, double[]> getSelectedGraphsX() {
+		HashMap<String, double[]> results = new HashMap<String, double[]>();
+		for (String name: graphs.keySet()) {
+			Graphs g = graphs.get(name);
+			if (g.draw) {
+				double []	p = g.points.get(selectedGraph),
+							x = new double[p.length/2];
+				for (int i = 0; i < p.length / 2; i++)
+					x[i] = p[i * 2];
+				results.put(name, x);
+			}
+		}
+		return results;
+	}
+	
+	/**
+	 * Get the Y coordinates of graphs selected to be drawn in this panel.
+	 * @return A HashMap<String, double[]> where the key is the name of the graph
+	 * and the value are the value of the Y coordinates.
+	 */
+	public HashMap<String, double[]> getSelectedGraphsY() {
+		HashMap<String, double[]> results = new HashMap<String, double[]>();
+		for (String name: graphs.keySet()) {
+			Graphs g = graphs.get(name);
+			if (g.draw) {
+				double []	p = g.points.get(selectedGraph),
+							y = new double[p.length/2];
+				for (int i = 0; i < p.length / 2; i++)
+					y[i] = p[i * 2 + 1];
+				results.put(name, y);
+			}
+		}
+		return results;
+	}
+
+	/**
+	 * Change color of a histogram already in SequencePanel.
 	 * @param name Name of the histogram.
 	 * @param c Color of the histogram.
 	 */
