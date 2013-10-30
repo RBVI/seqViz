@@ -69,6 +69,7 @@ public class CyActivator extends AbstractCyActivator {
 
 	private DisplayGraphSettings graphSettings;
 	public static final String[] graphTypes = {null, "best", "best&unique", "unique"};
+	public static final String defaultHistogram = "No Histogram";
 	
 	public CyActivator() {
 		super();
@@ -170,6 +171,7 @@ public class CyActivator extends AbstractCyActivator {
 		// Create and register our listeners
 	
 		// Load visual styles
+		graphSettings.networkViewSetting = styles.get(defaultHistogram);
 		for (String styleName: styles.keySet()) {
 			ChangeStyleTaskFactory changeStyle = new ChangeStyleTaskFactory(graphSettings, styles.get(styleName));
 			Properties changeStyleProps = new Properties();

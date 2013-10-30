@@ -24,6 +24,7 @@ import java.awt.event.MouseMotionListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,6 +35,7 @@ import java.util.TreeMap;
 
 import javax.swing.Action;
 import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
@@ -70,7 +72,7 @@ public class ContigView implements DisplayGraphEventListener {
 	 * 
 	 */
 	private static final long serialVersionUID = -7713836441534331408L;
-	private static final int defaultWidth = 800, defaultHeight = 400;
+	private static final int defaultWidth = 800, defaultHeight = 400, buttonWidth = 20, buttonHeight = 10;
 	private JButton reset, zoomIn, zoomOut, zoomInY, zoomOutY;
 	private JSplitPane splitPane;
 	private JScrollPane histoPane, settingsPane;
@@ -172,13 +174,13 @@ public class ContigView implements DisplayGraphEventListener {
 				}
 			}
 			histoPanel2.setGraph(null);
-		//	JLabel nodeTitle = new JLabel(s.split(":")[1] + "-" + s.split(":")[2]);
-		//	nodeTitle.setFont(new Font(Font.DIALOG, Font.PLAIN, 12));
-		//	newGraphColor.add(nodeTitle);
-		//	settingsPanel.add(nodeTitle);
 			final JButton colorButton = new JButton();
-		//	newGraphColor.add(colorButton = new JButton("Graph Color"));
-		//	settingsPanel.add(colorButton = new JButton("Graph Color"));
+			BufferedImage image = new BufferedImage(buttonWidth, buttonHeight, BufferedImage.TYPE_INT_ARGB);
+			Graphics2D g2 = image.createGraphics();
+			g2.setColor(randomColor);
+			g2.fillRect(0, 0, buttonWidth, buttonHeight);
+			ImageIcon buttonColor = new ImageIcon(image);
+			colorButton.setIcon(buttonColor);
 			colorButton.setBackground(randomColor);
 			colorButton.setToolTipText("Change the color of this graph.");
 			colorButton.addActionListener(new ActionListener() {
@@ -186,7 +188,13 @@ public class ContigView implements DisplayGraphEventListener {
 				public void actionPerformed(ActionEvent e) {
 					Color c = JColorChooser.showDialog(splitPane,
 							"Choose color of graph", colorButton.getBackground());
+					BufferedImage image = new BufferedImage(buttonWidth, buttonHeight, BufferedImage.TYPE_INT_ARGB);
+					Graphics2D g2 = image.createGraphics();
+					g2.setColor(c);
+					g2.fillRect(0, 0, buttonWidth, buttonHeight);
+					ImageIcon buttonColor = new ImageIcon(image);
 					histoPanel2.changeColor(s, c);
+					colorButton.setIcon(buttonColor);
 					colorButton.setBackground(c);
 					histoPanel2.repaint();
 				}
