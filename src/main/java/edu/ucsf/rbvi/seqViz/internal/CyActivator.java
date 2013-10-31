@@ -192,7 +192,7 @@ public class CyActivator extends AbstractCyActivator {
 		DisplayGraphEvent event = new DisplayGraphEvent(graphSettings);
 		event.setDisplayGraphSettings(graphSettings);
 		FireDisplayGraphEvent graphEvent = new FireDisplayGraphEvent(event);
-		final TaskManager taskManager = getService(bc, TaskManager.class);
+		final TaskManager<?,?> taskManager = getService(bc, TaskManager.class);
 		final CyApplicationManager applicationManager = getService(bc, CyApplicationManager.class);
 		graphEvent.addDisplayGraphEventListener(new DisplayGraphEventListener() {
 			
@@ -246,7 +246,7 @@ public class CyActivator extends AbstractCyActivator {
 		readFASTAProps.setProperty(MENU_GRAVITY, "9.0");
 		registerService(bc, readFASTAContigsTask, TaskFactory.class, readFASTAProps); */
 		
-		MapReadsTaskFactory mapReadsTask = new MapReadsTaskFactory(seqManager);
+		MapReadsTaskFactory mapReadsTask = new MapReadsTaskFactory(taskManager, seqManager);
 		Properties mapReadsProps = new Properties();
 		mapReadsProps.setProperty(PREFERRED_MENU, "Apps.SeqViz");
 		mapReadsProps.setProperty(TITLE, "Map Reads");

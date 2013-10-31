@@ -81,4 +81,9 @@ public class BowtieMapReadsTask extends AbstractMapReadsTask {
 		System.gc();
 	}
 
+	public <R> R getResults(Class<? extends R> arg0) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

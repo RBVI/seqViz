@@ -37,6 +37,8 @@ import edu.ucsf.rbvi.seqViz.internal.CyActivator;
  */
 public class ContigsManager {
 	
+	public static final int defaultBin = 50, defaultBinSize = 200;
+	
 	private HashMap<Long, ReadPair> readPairs;
 	private List<ReadPair> readPairList;
 	private HashMap<String,Contig> contigs;
@@ -95,21 +97,45 @@ public class ContigsManager {
 		histBest = new Histograms();
 		histBestUnique = new Histograms();
 		
-		bin = 50;
-		binSize = 200;
+		bin = defaultBin;
+		binSize = defaultBinSize;
 		settings = new SeqVizSettings();
 	}
 
-/*	public ContigsManager(BundleContext bc, CyNetwork curNetwork, VisualStyle vs) {
+	/**
+	 * Reset this instance of ContigsManager so it can be filled with another network.
+	 */
+	public void reset() {
 		contigs = new HashMap<String, Contig>();
 		readPairs = new HashMap<Long, ReadPair>();
 		readPairList = new ArrayList<ReadPair>();
-		bundleContext = bc;
-		this.vs = vs;
-		this.network = curNetwork;
-		settings = new SeqVizSettings();
-	} */
-
+		
+		network.dispose();
+		CyNetworkFactory networkFactory = bundleContext.getService(CyNetworkFactory.class);
+		this.network = networkFactory.createNetwork();
+		complementaryGraphs = new HashMap<String, ComplementaryGraphs>();
+		paired_end_hist = new HashMap<String, double[]>();
+		paired_end_hist_rev = new HashMap<String, double[]>();
+		read_cov_hist = new HashMap<String, double[]>();
+		read_cov_hist_pos = new HashMap<String, double[]>();
+		read_cov_hist_rev = new HashMap<String, double[]>();
+		
+		bpGraphsAll = new HashMap<String, ComplementaryGraphs>();
+		bpGraphsUnique = new HashMap<String, ComplementaryGraphs>();
+		bpGraphsBest = new HashMap<String, ComplementaryGraphs>();
+		bpGraphsBestUnique = new HashMap<String, ComplementaryGraphs>();
+		
+		bridgingReadsAll = new EdgeStat();
+		bridgingReadsUnique = new EdgeStat();
+		bridgingReadsBest = new EdgeStat();
+		bridgingReadsBestUnique = new EdgeStat();
+		
+		histAll = new Histograms();
+		histUnique = new Histograms();
+		histBest = new Histograms();
+		histBestUnique = new Histograms();
+	}
+	
 	/**
 	 * Initialize the settings for ContigsManager
 	 * 

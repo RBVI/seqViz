@@ -5,11 +5,12 @@ import java.io.File;
 import java.util.HashMap;
 
 import org.cytoscape.work.AbstractTask;
+import org.cytoscape.work.ObservableTask;
 import org.cytoscape.work.Tunable;
 
 import edu.ucsf.rbvi.seqViz.internal.model.ContigsManager;
 
-public abstract class AbstractMapReadsTask extends AbstractTask {
+public abstract class AbstractMapReadsTask extends AbstractTask implements ObservableTask {
 
 	protected ContigsManager contigs;
 	
