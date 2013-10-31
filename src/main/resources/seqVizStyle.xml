@@ -470,7 +470,7 @@
             <visualProperty name="EDGE_LABEL_FONT_FACE" default="SansSerif.plain,plain,10"/>
             <visualProperty name="EDGE_SOURCE_ARROW_UNSELECTED_PAINT" default="#000000"/>
             <visualProperty name="EDGE_STROKE_UNSELECTED_PAINT" default="#404040">
-                <continuousMapping attributeType="float" attributeName="reliability">
+                <continuousMapping attributeType="float" attributeName="reliability:best">
                     <continuousMappingPoint lesserValue="#000000" greaterValue="#ff0000" equalValue="#ff0000" attrValue="0.0"/>
                     <continuousMappingPoint lesserValue="#0000ff" greaterValue="#ffffff" equalValue="#0000ff" attrValue="1.0"/>
                 </continuousMapping>
@@ -485,7 +485,7 @@
                 </discreteMapping>
             </visualProperty>
             <visualProperty name="EDGE_WIDTH" default="1.0">
-                <passthroughMapping attributeType="float" attributeName="weight_log"/>
+                <passthroughMapping attributeType="float" attributeName="weight_log:best"/>
             </visualProperty>
             <visualProperty name="EDGE_TARGET_ARROW_UNSELECTED_PAINT" default="#000000"/>
             <visualProperty name="EDGE_VISIBLE" default="true"/>
@@ -588,12 +588,12 @@
         <edge>
             <dependency name="arrowColorMatchesEdge" value="false"/>
             <visualProperty name="EDGE_WIDTH" default="1.0">
-                <passthroughMapping attributeType="float" attributeName="weight_log"/>
+                <passthroughMapping attributeType="float" attributeName="weight_log:best"/>
             </visualProperty>
             <visualProperty name="EDGE_LINE_TYPE" default="SOLID"/>
             <visualProperty name="EDGE_SOURCE_ARROW_SELECTED_PAINT" default="#ffff00"/>
             <visualProperty name="EDGE_STROKE_UNSELECTED_PAINT" default="#404040">
-                <continuousMapping attributeType="float" attributeName="reliability">
+                <continuousMapping attributeType="float" attributeName="reliability:best">
                     <continuousMappingPoint lesserValue="#000000" greaterValue="#ff0000" equalValue="#ff0000" attrValue="0.0"/>
                     <continuousMappingPoint lesserValue="#0000ff" greaterValue="#ffffff" equalValue="#0000ff" attrValue="1.0"/>
                 </continuousMapping>
@@ -724,7 +724,7 @@
             <visualProperty name="EDGE_LABEL_FONT_FACE" default="SansSerif.plain,plain,10"/>
             <visualProperty name="EDGE_SOURCE_ARROW_UNSELECTED_PAINT" default="#000000"/>
             <visualProperty name="EDGE_STROKE_UNSELECTED_PAINT" default="#404040">
-                <continuousMapping attributeType="float" attributeName="reliability">
+                <continuousMapping attributeType="float" attributeName="reliability:best&amp;unique">
                     <continuousMappingPoint lesserValue="#000000" greaterValue="#ff0000" equalValue="#ff0000" attrValue="0.0"/>
                     <continuousMappingPoint lesserValue="#0000ff" greaterValue="#ffffff" equalValue="#0000ff" attrValue="1.0"/>
                 </continuousMapping>
@@ -739,7 +739,7 @@
                 </discreteMapping>
             </visualProperty>
             <visualProperty name="EDGE_WIDTH" default="1.0">
-                <passthroughMapping attributeType="float" attributeName="weight_log"/>
+                <passthroughMapping attributeType="float" attributeName="weight_log:best&amp;unique"/>
             </visualProperty>
             <visualProperty name="EDGE_TARGET_ARROW_UNSELECTED_PAINT" default="#000000"/>
             <visualProperty name="EDGE_VISIBLE" default="true"/>
@@ -842,12 +842,12 @@
         <edge>
             <dependency name="arrowColorMatchesEdge" value="false"/>
             <visualProperty name="EDGE_WIDTH" default="1.0">
-                <passthroughMapping attributeType="float" attributeName="weight_log"/>
+                <passthroughMapping attributeType="float" attributeName="weight_log:best&amp;unique"/>
             </visualProperty>
             <visualProperty name="EDGE_LINE_TYPE" default="SOLID"/>
             <visualProperty name="EDGE_SOURCE_ARROW_SELECTED_PAINT" default="#ffff00"/>
             <visualProperty name="EDGE_STROKE_UNSELECTED_PAINT" default="#404040">
-                <continuousMapping attributeType="float" attributeName="reliability">
+                <continuousMapping attributeType="float" attributeName="reliability:best&amp;unique">
                     <continuousMappingPoint lesserValue="#000000" greaterValue="#ff0000" equalValue="#ff0000" attrValue="0.0"/>
                     <continuousMappingPoint lesserValue="#0000ff" greaterValue="#ffffff" equalValue="#0000ff" attrValue="1.0"/>
                 </continuousMapping>
@@ -978,7 +978,7 @@
             <visualProperty name="EDGE_LABEL_FONT_FACE" default="SansSerif.plain,plain,10"/>
             <visualProperty name="EDGE_SOURCE_ARROW_UNSELECTED_PAINT" default="#000000"/>
             <visualProperty name="EDGE_STROKE_UNSELECTED_PAINT" default="#404040">
-                <continuousMapping attributeType="float" attributeName="reliability">
+                <continuousMapping attributeType="float" attributeName="reliability:unique">
                     <continuousMappingPoint lesserValue="#000000" greaterValue="#ff0000" equalValue="#ff0000" attrValue="0.0"/>
                     <continuousMappingPoint lesserValue="#0000ff" greaterValue="#ffffff" equalValue="#0000ff" attrValue="1.0"/>
                 </continuousMapping>
@@ -993,7 +993,7 @@
                 </discreteMapping>
             </visualProperty>
             <visualProperty name="EDGE_WIDTH" default="1.0">
-                <passthroughMapping attributeType="float" attributeName="weight_log"/>
+                <passthroughMapping attributeType="float" attributeName="weight_log:unique"/>
             </visualProperty>
             <visualProperty name="EDGE_TARGET_ARROW_UNSELECTED_PAINT" default="#000000"/>
             <visualProperty name="EDGE_VISIBLE" default="true"/>
@@ -1096,12 +1096,12 @@
         <edge>
             <dependency name="arrowColorMatchesEdge" value="false"/>
             <visualProperty name="EDGE_WIDTH" default="1.0">
-                <passthroughMapping attributeType="float" attributeName="weight_log"/>
+                <passthroughMapping attributeType="float" attributeName="weight_log:unique"/>
             </visualProperty>
             <visualProperty name="EDGE_LINE_TYPE" default="SOLID"/>
             <visualProperty name="EDGE_SOURCE_ARROW_SELECTED_PAINT" default="#ffff00"/>
             <visualProperty name="EDGE_STROKE_UNSELECTED_PAINT" default="#404040">
-                <continuousMapping attributeType="float" attributeName="reliability">
+                <continuousMapping attributeType="float" attributeName="reliability:unique">
                     <continuousMappingPoint lesserValue="#000000" greaterValue="#ff0000" equalValue="#ff0000" attrValue="0.0"/>
                     <continuousMappingPoint lesserValue="#0000ff" greaterValue="#ffffff" equalValue="#0000ff" attrValue="1.0"/>
                 </continuousMapping>
