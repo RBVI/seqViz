@@ -38,7 +38,7 @@ public class MapReadsTaskFactory extends AbstractTaskFactory {
 				}
 				
 				public void allFinished(FinishStatus arg0) {
-					if (arg0.getType() != FinishStatus.Type.SUCCEEDED)
+					if (arg0.getType() == FinishStatus.Type.FAILED)
 						manager.reset();
 				}
 			});
