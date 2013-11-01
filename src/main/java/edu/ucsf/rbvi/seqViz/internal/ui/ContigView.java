@@ -48,6 +48,7 @@ import javax.swing.JColorChooser;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
@@ -338,19 +339,31 @@ public class ContigView implements DisplayGraphEventListener {
 			
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser saveImage = new JFileChooser();
-				saveImage.addChoosableFileFilter(new ImageFilter());
+				ImageFilter chosenFilter;
+				saveImage.addChoosableFileFilter(chosenFilter = new ImageFilter(Utils.png));
+				saveImage.addChoosableFileFilter(new ImageFilter(Utils.jpg));
+				saveImage.addChoosableFileFilter(new ImageFilter(Utils.gif));
+				saveImage.setFileFilter(chosenFilter);
 				saveImage.setAcceptAllFileFilterUsed(false);
 				if (JFileChooser.APPROVE_OPTION == saveImage.showSaveDialog(splitPane)) {
 					File outFile = saveImage.getSelectedFile();
-					BufferedImage image = new BufferedImage(histoPanel2.getWidth(), histoPanel2.getHeight(), BufferedImage.TYPE_INT_ARGB);
-					Graphics2D g = image.createGraphics();
-					histoPanel2.paint(g);
-					g.dispose();
-					try {
-						ImageIO.write(image, "png", outFile);
-					} catch (IOException e1) {
-						e1.printStackTrace();
+					chosenFilter = (ImageFilter) saveImage.getFileFilter();
+					Utils util = new Utils();
+					if (util.getExtension(outFile) == null || !util.getExtension(outFile).equals(chosenFilter.getExtension()))
+						outFile = new File(outFile.getAbsoluteFile() + "." + chosenFilter.getExtension());
+					if (!outFile.exists()) {
+						BufferedImage image = new BufferedImage(histoPanel2.getWidth(), histoPanel2.getHeight(), BufferedImage.TYPE_INT_ARGB);
+						Graphics2D g = image.createGraphics();
+						histoPanel2.paint(g);
+						g.dispose();
+						try {
+							ImageIO.write(image, chosenFilter.getExtension(), outFile);
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
 					}
+					else
+						JOptionPane.showMessageDialog(splitPane, "File already exists. Choose different file name.", "Image not saved", JOptionPane.ERROR_MESSAGE);;
 				}
 			}
 		});
@@ -363,33 +376,38 @@ public class ContigView implements DisplayGraphEventListener {
 					File outFile = saveData.getSelectedFile();
 					HashMap<String, double[]> x = histoPanel2.getSelectedGraphsX();
 					HashMap<String, double[]> y = histoPanel2.getSelectedGraphsY();
-					try {
-						PrintWriter writer = new PrintWriter(outFile);
-						int graphLength = 0;
-						boolean first = true;
-						for (String s: x.keySet()) {
-							if (!first) writer.print(",");
-							writer.print("\"" + s + ":position\"," + s + ":coverage");
-							first = false;
-							if (x.get(s).length > graphLength) graphLength = x.get(s).length;
-						}
-						writer.print("\n");
-						for (int i = 0; i < graphLength; i++) {
-							first = true;
+					if (!outFile.exists()) {
+						try {
+							PrintWriter writer = new PrintWriter(outFile);
+							int graphLength = 0;
+							boolean first = true;
 							for (String s: x.keySet()) {
 								if (!first) writer.print(",");
-								if (x.get(s).length > i)
-									writer.print("\"" + x.get(s)[i] + "\"," + y.get(s)[i] + "\"");
-								else
-									writer.print("\"\"");
+								writer.print("\"" + s + ":position\"," + s + ":coverage");
 								first = false;
+								if (x.get(s).length > graphLength) graphLength = x.get(s).length;
 							}
-							writer.write("\n");
+							writer.print("\n");
+							for (int i = 0; i < graphLength; i++) {
+								first = true;
+								for (String s: x.keySet()) {
+									if (!first) writer.print(",");
+									if (x.get(s).length > i)
+										writer.print("\"" + x.get(s)[i] + "\"," + y.get(s)[i] + "\"");
+									else
+										writer.print("\"\"");
+									first = false;
+								}
+								writer.write("\n");
+							}
+							writer.close();
+						} catch (IOException e1) {
+							e1.printStackTrace();
 						}
-						writer.close();
-					} catch (IOException e1) {
-						e1.printStackTrace();
 					}
+					else
+						JOptionPane.showMessageDialog(splitPane, "File already exists. Choose different file name.", "File not saved", JOptionPane.ERROR_MESSAGE);;
+
 				}
 			}
 		});
@@ -587,7 +605,19 @@ public class ContigView implements DisplayGraphEventListener {
 	}
 	
 	private class ImageFilter extends FileFilter {
-		 
+		private HashMap<String, String> formatName;
+		private String extension;
+		
+		public ImageFilter(String s) {
+			extension = s;
+			formatName = new HashMap<String, String>();
+			formatName.put(Utils.png, "PNG (*.png)");
+			formatName.put(Utils.jpg, "JPEG (*.jpg)");
+			formatName.put(Utils.gif, "GIF (*.gif)");
+		}
+		
+		public String getExtension() {return extension;}
+		
 	    //Accept all directories and all gif, jpg, tiff, or png files.
 	    public boolean accept(File f) {
 	        if (f.isDirectory()) {
@@ -596,12 +626,7 @@ public class ContigView implements DisplayGraphEventListener {
 	        Utils util = new Utils();
 	        String extension = util.getExtension(f);
 	        if (extension != null) {
-	            if (extension.equals(Utils.tiff) ||
-	                extension.equals(Utils.tif) ||
-	                extension.equals(Utils.gif) ||
-	                extension.equals(Utils.jpeg) ||
-	                extension.equals(Utils.jpg) ||
-	                extension.equals(Utils.png)) {
+	            if (extension.equals(extension)) {
 	                    return true;
 	            } else {
 	                return false;
@@ -613,7 +638,7 @@ public class ContigView implements DisplayGraphEventListener {
 	 
 	    //The description of this filter
 	    public String getDescription() {
-	        return "Image File";
+	        return formatName.get(extension);
 	    }
 	}
 }
