@@ -111,9 +111,9 @@ public class CyActivator extends AbstractCyActivator {
 				if (vsSet != null)
 					for (VisualStyle vs: vsSet) {
 						vmmServiceRef.addVisualStyle(vs);
-						style = vs;
 						String styleTitle, title, graph;
 						vs.setTitle(styleTitle = vs.getTitle().split("_")[0]);
+						if (styleTitle.equals("No Histogram")) style = vs;
 						String[] styleTitle2 = styleTitle.split(":");
 						title = styleTitle2[0];
 						if (styleTitle2.length == 2)

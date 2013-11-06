@@ -773,8 +773,11 @@ public class ContigsManager {
 		// Calculate log of weight
 		if (table.getColumn(weight_log) == null)
 			table.createColumn(weight_log, Double.class, false);
-		for (Long cyId: table.getPrimaryKey().getValues(Long.class))
-			table.getRow(cyId).set(weight_log, Math.log(table.getRow(cyId).get("weight", Double.class)));
+		for (Long cyId: table.getPrimaryKey().getValues(Long.class)) {
+			Double getWeight = table.getRow(cyId).get(weight, Double.class);
+			if (getWeight != null)
+				table.getRow(cyId).set(weight_log, Math.log(getWeight));
+		}
 	}
 
 	/**
