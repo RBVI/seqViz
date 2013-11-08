@@ -340,13 +340,13 @@ public class ContigsManager {
 		iterativeBridgingReads(bridgingReadsBest, bundle2Pair(bestPair));
 		iterativeCreateHist(histBest, bundle2Pair(bestPair));
 
-		if (pos == 1 && rev == 1) {
+		if (pos <= 1 && rev <= 1) {
 			iterativeBpGraph(bpGraphsUnique, thisPair);
 			iterativeBridgingReads(bridgingReadsUnique, thisPair);
 			iterativeCreateHist(histUnique, thisPair);
 		}
 		
-		if (bestPos.size() == 1 && bestRev.size() == 1) {
+		if (bestPos.size() <= 1 && bestRev.size() <= 1) {
 			iterativeBpGraph(bpGraphsBestUnique, bundle2Pair(bestPair));
 			iterativeBridgingReads(bridgingReadsBestUnique, bundle2Pair(bestPair));
 			iterativeCreateHist(histBestUnique, bundle2Pair(bestPair));
