@@ -319,6 +319,8 @@ public class ContigView implements DisplayGraphEventListener {
 					histoPanel2.setSequencePanelSize(width * widthScale, height * heightScale);
 					histoPanel2.revalidate();
 					histoPanel2.repaint();
+					ChangeYScrollBar changeY = new ChangeYScrollBar(histoPane, (double) y_max / (double) (y_max - y_min));
+					changeY.start();
 				}
 			}
 		});
@@ -331,6 +333,8 @@ public class ContigView implements DisplayGraphEventListener {
 					histoPanel2.setSequencePanelSize(width * widthScale, height * heightScale);
 					histoPanel2.revalidate();
 					histoPanel2.repaint();
+					ChangeYScrollBar changeY = new ChangeYScrollBar(histoPane, (double) y_max / (double) (y_max - y_min));
+					changeY.start();
 				}
 			}
 		});
@@ -569,6 +573,26 @@ public class ContigView implements DisplayGraphEventListener {
 			xBar.setValue((int) ((xBar.getMaximum()-xBar.getMinimum()-xBar.getBlockIncrement(1)) * factor));
 		}
 	}
+
+	private class ChangeYScrollBar extends Thread {
+		private JScrollPane b;
+		private double factor;
+		public ChangeYScrollBar(JScrollPane scroll, double barFactor) {
+			b = scroll;
+			factor = barFactor;
+		}
+		public void run() {
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			JScrollBar yBar = b.getVerticalScrollBar();
+			yBar.setValue((int) ((yBar.getMaximum()-yBar.getMinimum()-yBar.getBlockIncrement(1)) * factor));
+		}
+	}
+	
 	/**
 	 * Returns the SplitPane created.
 	 * @return
