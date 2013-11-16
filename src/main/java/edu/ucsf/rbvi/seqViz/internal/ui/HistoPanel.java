@@ -17,8 +17,9 @@ import java.util.HashMap;
 import javax.swing.JPanel;
 
 /**
- * Creates a JPanel that displays the histogram as a line graph.
- * @author aywu
+ * Creates a JPanel that displays many histograms as a line graphs. No longer
+ * used since these feautres have been folded into SequencePanel.
+ * @author Allan Wu
  *
  */
 public class HistoPanel extends JPanel {
@@ -27,13 +28,35 @@ public class HistoPanel extends JPanel {
 	 * 
 	 */
 	private static final long serialVersionUID = -3604183601615232797L;
+	// Whether or not to draw the a vertical line, used for purposes of
+	// "sweeping" an area on HistoPanel
 	private boolean drawYLine = false;
+	/**
+	 * width -- width (number of pixels)
+	 * height -- height (number of pixels)
+	 * x_center -- horizontal center (0-point) of the histogram
+	 * y_center -- vertical center (0-point) of the histogram
+	 * begLine -- beginning of a sweep of the histogram (show line when drawYLine == true)
+	 * endLine -- ending of a sweep of the histogram (show line when drawYLine == true)
+	 */
 	private int width, height, x_center, y_center, begLine, endLine;
 	private Integer beg = null, end = null;
+	/**
+	 * x_inc -- number of pixels that equals an increment of 1 in the x-axis of the graph (can be a fraction)
+	 * y_inc -- number of pixels that equals an increment of 1 in the y-axis of the graph (can be a fraction)
+	 * x_min -- minimum x-axis range of histogram
+	 * x_max -- maximum x-axis range of histogram
+	 * y_min -- minimum y-axis range of histogram
+	 * y_max -- maximum y-axis range of histogram
+	 */
 	private double x_inc, y_inc, x_min, x_max, y_min, y_max;
+	// Affine transform that transforms screen coordinates into real coordinates
 	private AffineTransform transform;
+	// Graphs that can be displayed on this panel (controlled by setGraphVisible() method)
 	private HashMap<String, Graphs> graphs;
+	// The sequence to be displayed at the center of the histogram
 	private String seq = null;
+	// Font of the above sequence
 	private Font seqFont = null;
 	
 	/**
@@ -270,27 +293,6 @@ public class HistoPanel extends JPanel {
 				e.printStackTrace();
 			}
 		}
-/*		for (double j = x_center; j < width; j += x_step) {
-			int i = (int) j;
-			System.out.println(i);
-			g.drawString(String.format("%.1f", i / x_inc), i, y_center - 5);
-			g.drawLine(i, y_center - 5, i, y_center + 5);
-		}
-		for (int j = x_center; j > 0; j -= x_step) {
-			int i = (int) j;
-			g.drawString(String.format("%.1f", i / x_inc), i, y_center - 5);
-			g.drawLine(i, y_center - 5, i, y_center + 5);
-		}
-		for (int j = y_center; j > 0; j -= y_step) {
-			int i = (int) j;
-			g.drawString(String.format("%.1f", (y_center - i) / y_inc), 0, i);
-			g.drawLine(0, i, width, i);
-		}
-		for (int j = y_center; j < height; j += y_step) {
-			int i = (int) j;
-			g.drawString(String.format("%.1f", (y_center - i) / y_inc), 0, i);
-			g.drawLine(0, i, width, i);
-		} */
 	}
 	
 	private void drawLineGraph(Graphics g, double[] xy, Color c) {
@@ -309,6 +311,11 @@ public class HistoPanel extends JPanel {
 		g.drawString(seq, 0, y_center + 15);
 	}
 	
+	/**
+	 * Inner class to hold a graph for this HistoPanel
+	 * @author Allan Wu
+	 *
+	 */
 	private class Graphs {
 		public boolean draw;
 		public Color color;

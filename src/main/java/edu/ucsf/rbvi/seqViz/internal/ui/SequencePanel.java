@@ -15,23 +15,63 @@ import java.util.HashMap;
 
 import javax.swing.JPanel;
 
+/**
+ * Creates a JPanel that displays many histograms as a line graphs. It also displays a DNA
+ * sequence in the middle that is displayed when it is zoomed in close enough, and can be
+ * copied by selecting it.
+ * @author Allan Wu
+ *
+ */
 public class SequencePanel extends JPanel {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -5894823555682540267L;
+	// Default font for sequence
 	private static final String fontName = Font.MONOSPACED;
+	// Default font style for sequence
 	private static int fontStyle = Font.PLAIN;
+	// Default font
 	private static Font font = new Font(fontName, fontStyle, 12);
+	/**
+	 *  drawYLine -- Whether or not to draw the a vertical line, used for purposes of
+	 *  "sweeping" an area on HistoPanel
+	 *  highlightSequence -- highlight the sequence in the panel
+	 */
 	private boolean drawYLine = false, highlightSequence = false;
+	/**
+	 * width -- width (number of pixels)
+	 * height -- height (number of pixels)
+	 * x_center -- horizontal center (0-point) of the histogram
+	 * y_center -- vertical center (0-point) of the histogram
+	 * begLine -- beginning of a sweep of the histogram (show line when drawYLine == true)
+	 * endLine -- ending of a sweep of the histogram (show line when drawYLine == true)
+	 * sequenceHeight -- height of sequence (pixels)
+	 * characterWidth -- width of one character (pixels)
+	 * xBeg -- beginning of selected sequence
+	 * xEnd -- end of selected sequence
+	 */
 	private int width, height, x_center, y_center, y_center_lower, begLine, endLine, sequenceHeight, characterWidth, xBeg = 0, xEnd = 0;
 	private Integer beg = null, end = null;
+	/**
+	 * x_inc -- number of pixels that equals an increment of 1 in the x-axis of the graph (can be a fraction)
+	 * y_inc -- number of pixels that equals an increment of 1 in the y-axis of the graph (can be a fraction)
+	 * x_min -- minimum x-axis range of histogram
+	 * x_max -- maximum x-axis range of histogram
+	 * y_min -- minimum y-axis range of histogram
+	 * y_max -- maximum y-axis range of histogram
+	 */
 	private double x_inc, y_inc, x_min, x_max, y_min, y_max;
+	// Affine transform that transforms screen coordinates into real coordinates
 	private AffineTransform transform, transformNeg;
+	// Graphs that can be displayed on this panel (controlled by setGraphVisible() method)
 	private HashMap<String, Graphs> graphs;
+	// The sequence to be displayed at the center of the histogram
 	private String seq = null, selectedGraph = null;
+	// Font of the above sequence
 	private Font seqFont;
+	// FontMetrics for this panel
 	private FontMetrics fontMetrics;
 	
 	/**

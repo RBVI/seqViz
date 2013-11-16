@@ -21,7 +21,8 @@ import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyTable;
 
 /**
- * A JPanel to display the sequence alongside the histograms.
+ * A JPanel to display the sequence alongside the histograms. No longer used since this function
+ * has been folded into SequencePanel.
  * @author aywu
  *
  */

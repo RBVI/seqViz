@@ -9,7 +9,9 @@ import java.util.HashMap;
  *
  */
 public class ComplementaryGraphs {
+	// Graphs of reads mapping in the positive orientation.
 	public HashMap<String, long[]> pos;
+	// Graphs of reads mapping in the reverse orientation.
 	public HashMap<String, long[]> rev;
 	public ComplementaryGraphs() {
 		pos = new HashMap<String, long[]>();

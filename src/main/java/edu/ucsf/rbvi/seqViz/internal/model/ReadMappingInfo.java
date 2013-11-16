@@ -1,13 +1,20 @@
 package edu.ucsf.rbvi.seqViz.internal.model;
 
+/**
+ * Container class that stores information on successful mapping
+ * of a read. Points to the a read Read instead of storing to save memory.
+ * @author aywu
+ *
+ */
 public class ReadMappingInfo {
 	
 	private static byte STRAND = 0x01, SAME_CONTIG = 0x02;
+	// The read
 	private Read read;
+	// Mapping score
 	private int score;
+	// Location of mapping (position of left-most base-pair
 	private int locus;
-//	private boolean strand;
-//	private boolean sameContig;
 	private byte flags;
 	
 	/**

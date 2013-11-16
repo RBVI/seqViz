@@ -7,6 +7,11 @@ import java.util.List;
 import edu.ucsf.rbvi.seqViz.internal.tasks.AbstractMapReadsTask;
 import edu.ucsf.rbvi.seqViz.internal.tasks.AbstractMapOutputReader;
 
+/**
+ * Container class holding settings for how a set of reads is mapped to a set of contigs.
+ * @author Allan Wu
+ *
+ */
 public class SeqVizSettings {
 	public AbstractMapReadsTask mapReads;
 	public int threads;

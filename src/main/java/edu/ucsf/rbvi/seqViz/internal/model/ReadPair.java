@@ -6,6 +6,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * A structure that stores and allows easy access of mappings of pairs of reads.
+ * Can efficiently access all the reads, read1 or read2 of mappings of reads.
+ * @author Allan Wu
+ *
+ */
 public class ReadPair {
 	
 /*	private HashMap<String, List<ReadMappingInfo>> mate1;

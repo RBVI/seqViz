@@ -1,5 +1,10 @@
 package edu.ucsf.rbvi.seqViz.internal.model;
 
+/**
+ * Container class holding information about a read.
+ * @author Allan Wu
+ *
+ */
 public class Read {
 	
 //	private boolean pair; // mate-pair indicator

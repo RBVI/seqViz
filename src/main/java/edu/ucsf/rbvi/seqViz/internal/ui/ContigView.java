@@ -81,18 +81,69 @@ public class ContigView implements DisplayGraphEventListener {
 	 * 
 	 */
 	private static final long serialVersionUID = -7713836441534331408L;
+	/**
+	 * defaultWidth -- default width of SequencePanel (pixels)
+	 * defaultHeight -- default height of SequencePanel (pixels)
+	 * buttonWidth -- default width of button (pixels)
+	 * buttonHeight -- default height of button (pixels)
+	 */
 	private static final int defaultWidth = 800, defaultHeight = 400, buttonWidth = 20, buttonHeight = 10;
+	/**
+	 * Buttons for doing different tasks
+	 * reset -- reset SequencePanel to default width and height
+	 * zoomIn -- zoom in on x-axis by factor of 2
+	 * zoomOut -- zoom out on x-axis by factor of 2
+	 * zoomInY -- zoom in on y-axis by factor of 2
+	 * zoomOutY -- zoom out on y-axis by factor of 2
+	 * export -- export image of SequencePanel
+	 * exportData -- export data of SequencePanel
+	 */
 	private JButton reset, zoomIn, zoomOut, zoomInY, zoomOutY, export, exportData;
+	// JSplitPane returned
 	private JSplitPane splitPane;
+	/**
+	 * Two major JScrollPanes used in the user interface
+	 * histoPane -- a scroll pane containing SequencePanel
+	 * settingsPane -- pane for controlling which graph is displayed and the color of the graph.
+	 */
 	private JScrollPane histoPane, settingsPane;
+	/**
+	 * JPanels used in the user interface
+	 * histoPanel -- JPanel that contains histoPane and zoomPane that controls the display of SequencePanel
+	 * zoomPane -- JPanel containing the zoom buttons placed at the bottom of histoPanel
+	 */
 	private JPanel histoPanel, zoomPane, settingsPanel;
+	// The panel containing the histograms and sequence
 	private SequencePanel histoPanel2;
 	private ContigsManager manager;
 	private Contig contig;
 	private ComplementaryGraphs graphs;
+	/**
+	 * Various dimensions of the histogram
+	 * y_min -- minimum of the y-axis range of the histogram
+	 * y_min -- maximum of the y-axis range of the histogram
+	 * contigLength -- length of the contig (in this case the sequence)
+	 * binSize -- size of bin for histogram
+	 */
 	private long y_min = 0, y_max = 0, contigLength = 0, binSize;
+	/**
+	 * Various settings on the size of the histogram
+	 * width -- width (pixels)
+	 * height -- height (pixels)
+	 * widthScale -- scaling factor for width (changed by zoom buttons)
+	 * heightScale -- scaling factor for height (changed by zoom buttons)
+	 * begLine -- beginning of the sweep
+	 * endLine -- end of the sweep
+	 * characterWidth -- width of each character in the sequence displayed
+	 */
 	private int width = defaultWidth, height = defaultHeight, widthScale = 1, heightScale = 1, begLine, endLine, characterWidth = 1;
+	/**
+	 * Another scaling factor for width (changed by sweeping)
+	 */
 	private double incWidthScale = 1;
+	/**
+	 * Clipboard to place the selected sequence into
+	 */
 	private Clipboard clipboard;
 	private String selectedSequence = null;
 	
