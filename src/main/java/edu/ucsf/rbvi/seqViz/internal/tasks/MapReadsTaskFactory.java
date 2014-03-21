@@ -24,25 +24,6 @@ public class MapReadsTaskFactory extends AbstractTaskFactory {
 	public boolean isReady() { return manager.isInitialized() && manager.mapperSettingsIntiialized(); }
 	
 	public TaskIterator createTaskIterator() {
-		// TODO Auto-generated method stub
-		return new TaskIterator(new ExecuteMapping());
-	}
-
-	private class ExecuteMapping extends AbstractTask {
-		
-		@Override
-		public void run(TaskMonitor arg0) throws Exception {
-			taskManager.execute(new TaskIterator(manager.getSettings().mapReads), new TaskObserver() {
-				
-				public void taskFinished(ObservableTask arg0) {
-				}
-				
-				public void allFinished(FinishStatus arg0) {
-					if (arg0.getType() == FinishStatus.Type.FAILED)
-						manager.reset();
-				}
-			});
-		}
-		
+		return new TaskIterator(manager.getSettings().mapReads);
 	}
 }

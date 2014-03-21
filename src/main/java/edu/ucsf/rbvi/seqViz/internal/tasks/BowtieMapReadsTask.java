@@ -62,8 +62,10 @@ public class BowtieMapReadsTask extends AbstractMapReadsTask {
 		AbstractMapOutputReader reader = new SAMReader(contigs);
 		reader.readReads(p.getInputStream(), arg0, readEstimate);
 		p.waitFor();
-		if (p.exitValue() != 0)
+		if (p.exitValue() != 0) {
+			contigs.reset();
 			throw new Exception("bowtie2-align exited with error " + p.exitValue());
+		}
 		File indexFile;
 		String[] suffixes = {".1.bt2", ".2.bt2", ".3.bt2", ".4.bt2", ".rev.1.bt2", ".rev.2.bt2"};
 		for (String suffix : suffixes) {
