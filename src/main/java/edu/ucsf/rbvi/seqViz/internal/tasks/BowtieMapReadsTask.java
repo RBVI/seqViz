@@ -19,10 +19,10 @@ public class BowtieMapReadsTask extends AbstractMapReadsTask {
 
 	@Tunable(description="File containing the contigs",params="input=true;fileCategory=unspecified")
 	public File contigsFile;
-	@Tunable(description="File containing reads of mate2", params="input=true;fileCategory=unspecified")
-	public File mate2;
 	@Tunable(description="File containing reads of mate1", params="input=true;fileCategory=unspecified")
 	public File mate1;
+	@Tunable(description="File containing reads of mate2", params="input=true;fileCategory=unspecified")
+	public File mate2;
 	@Tunable(description="Format of read files")
 	public ListSingleSelection<String> format;
 	
@@ -39,11 +39,11 @@ public class BowtieMapReadsTask extends AbstractMapReadsTask {
 		// TODO Auto-generated method stub
 		if (contigs.getSettings().mate1 != null && !contigs.getSettings().mate1.isEmpty());
 		if (contigs.getSettings().mate2 != null && !contigs.getSettings().mate2.isEmpty());
-		
+
 		ReadFASTAContigsTask contigReader = new ReadFASTAContigsTask(contigs);
 		contigReader.contigsFile = contigsFile;
 		contigReader.run(arg0);
-		
+
 		BufferedReader mate1Reads = new BufferedReader(new FileReader(mate1));
 		String line;
 		long sample = 10000, sampleSize = 0;
@@ -53,12 +53,39 @@ public class BowtieMapReadsTask extends AbstractMapReadsTask {
 		}
 		mate1Reads.close();
 		long readEstimate = mate1.length() * (sample / 4) / sampleSize;
-		
-		Process index = Runtime.getRuntime().exec(contigs.getSettings().mapper_dir + "bowtie2-build -f " + contigsFile.getAbsolutePath() + " " + contigs.getSettings().temp_dir + contigsFile.getName());
+
+		String[] bowtieCommands = {
+						contigs.getSettings().mapper_dir + "bowtie2-build",
+						"-f",
+						contigsFile.getAbsolutePath(),
+						contigs.getSettings().temp_dir + contigsFile.getName()
+		};
+		arg0.showMessage(TaskMonitor.Level.INFO, "Executing: "+strArray(bowtieCommands));
+		Process index = Runtime.getRuntime().exec(bowtieCommands);
 		index.waitFor();
-		if (index.exitValue() != 0)
+		if (index.exitValue() != 0) {
+			contigs.reset();
 			throw new Exception("bowtie2-build exited with error " + index.exitValue());
-		Process p = Runtime.getRuntime().exec(contigs.getSettings().mapper_dir + "bowtie2 -q --end-to-end --fast -p " + contigs.getSettings().threads + " --" + format.getSelectedValue() + " -a -x " + contigs.getSettings().temp_dir + contigsFile.getName() + " -1 " + mate1.getAbsolutePath() + " -2 " + mate2.getAbsolutePath());
+		}
+
+		String[] bowtieCommands2 = {
+						contigs.getSettings().mapper_dir + "bowtie2-align",
+						"-q",
+					 	"--end-to-end",
+					 	"--fast",
+						"-p",
+						""+contigs.getSettings().threads,
+					 	"--"+format.getSelectedValue(),
+					 	"-a",
+						"-x",
+						contigs.getSettings().temp_dir + contigsFile.getName(),
+						"-1",
+					 	mate1.getAbsolutePath(),
+						"-2",
+						mate2.getAbsolutePath()
+		};
+		arg0.showMessage(TaskMonitor.Level.INFO, "Executing: "+strArray(bowtieCommands2));
+		Process p = Runtime.getRuntime().exec(bowtieCommands2);
 		AbstractMapOutputReader reader = new SAMReader(contigs);
 		reader.readReads(p.getInputStream(), arg0, readEstimate);
 		p.waitFor();
@@ -72,10 +99,10 @@ public class BowtieMapReadsTask extends AbstractMapReadsTask {
 			indexFile = new File(contigs.getSettings().temp_dir + contigsFile.getName() + suffix);
 			indexFile.delete();
 		}
-		
-	//	contigs.displayBridgingReads();
-	//	contigs.createHist(200);
-	//	contigs.loadBpGraphs(50);
+
+		// contigs.displayBridgingReads();
+		// contigs.createHist(200);
+		// contigs.loadBpGraphs(50);
 		contigs.saveBpGraphs();
 		contigs.saveBridgingReads();
 		contigs.saveHist();
@@ -88,4 +115,15 @@ public class BowtieMapReadsTask extends AbstractMapReadsTask {
 		return null;
 	}
 
+	public String escape(String str) {
+		return "\""+str.replaceAll(" ","\\\\ ")+"\"";
+	}
+
+	public String strArray(String[] str) {
+		String ret = "";
+		for(String s: str) {
+			ret += s+" ";
+		}
+		return ret;
+	}
 }
