@@ -88,81 +88,20 @@ public class CyActivator extends AbstractCyActivator {
 
 		if (ref == null) {
 			haveGUI = false;
-			// Issue error and return
-		}
-		
-		// Load new Visual Style for seqViz
-		HashMap<String, HashMap<String,VisualStyle>> styles = new HashMap<String, HashMap<String,VisualStyle>>();
-		VisualMappingManager vmmServiceRef = getService(bc,VisualMappingManager.class);
-		InputStream stream = CyActivator.class.getResourceAsStream("/seqVizStyle.xml");
-		VisualStyle style = null;
-		if (stream != null) {
-				LoadVizmapFileTaskFactory loadVizmapFileTaskFactory =  getService(bc,LoadVizmapFileTaskFactory.class);
-				Set<VisualStyle> vsSet = loadVizmapFileTaskFactory.loadStyles(stream);
-				if (vsSet != null)
-					for (VisualStyle vs: vsSet) {
-						vmmServiceRef.addVisualStyle(vs);
-						String styleTitle, title, graph;
-						vs.setTitle(styleTitle = vs.getTitle().split("_")[0]);
-						if (styleTitle.equals("No Histogram")) style = vs;
-						String[] styleTitle2 = styleTitle.split(":");
-						title = styleTitle2[0];
-						if (styleTitle2.length == 2)
-							graph = styleTitle2[1];
-						else graph = null;
-						HashMap<String, VisualStyle> thisStyle;
-						if (styles.containsKey(title))
-							thisStyle = styles.get(title);
-						else {
-							thisStyle = new HashMap<String, VisualStyle>();
-							styles.put(title, thisStyle);
-						}
-						thisStyle.put(graph, vs);
-					}
-		}
-		
-		// Create the context object
-		ContigsManager seqManager = new ContigsManager(getService(bc,CyServiceRegistrar.class), style);
-
-		// Get OS information and set seqManager
-		// Set default folder to look for bowtie and store bowtie index
-		String OS = System.getProperty("os.name").toLowerCase();
-		SeqVizSettingsTask setParams = new SeqVizSettingsTask(seqManager);
-		if (OS.indexOf("win") >= 0) {
-			setParams.loadBridgingReads = false;
-			setParams.mapDir = "";
-			setParams.tempDir = "%TEMP%\\";
-			setParams.mapper.setSelectedValue("bowtie");
-			try {
-				setParams.run(null);
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		else if (OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") > 0 || OS.indexOf("sunos") >= 0 || OS.indexOf("mac") >= 0) {
-			setParams.loadBridgingReads = false;
-			setParams.mapDir = "";
-			setParams.tempDir = "/tmp/";
-			setParams.mapper.setSelectedValue("bowtie");
-			try {
-				setParams.run(null);
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
 		}
 		
 		// Get a handle on the CyServiceRegistrar
 		CyServiceRegistrar registrar = getService(bc, CyServiceRegistrar.class);
 
-		// Create and register our listeners
-	
-		// Load visual styles
+		// Create the context object
+		ContigsManager seqManager = new ContigsManager(registrar);
+		SeqVizSettingsTask setParams = new SeqVizSettingsTask(seqManager);
+
 		// Currently visual styles are loaded from /resources/seqVizStyle.xml
-		graphSettings.networkViewSetting = styles.get(defaultHistogram);
-		for (String styleName: styles.keySet()) {
-			ChangeStyleTaskFactory changeStyle = new ChangeStyleTaskFactory(graphSettings, styles.get(styleName));
+		graphSettings.networkViewSetting = seqManager.getVisualStyle(defaultHistogram);
+		for (String styleName: seqManager.getStyleNames()) {
+			ChangeStyleTaskFactory changeStyle = 
+				new ChangeStyleTaskFactory(graphSettings, seqManager.getVisualStyle(styleName));
 			Properties changeStyleProps = new Properties();
 			changeStyleProps.setProperty(PREFERRED_MENU, "Apps.SeqViz.Show Histograms");
 			changeStyleProps.setProperty(TITLE, styleName);
@@ -235,17 +174,18 @@ public class CyActivator extends AbstractCyActivator {
 		mapReadsProps.setProperty(MENU_GRAVITY, "8.0");
 		registerService(bc, mapReadsTask, TaskFactory.class, mapReadsProps);
 		
-		OpenContigViewTaskFactory contigViewTaskFactory = new OpenContigViewTaskFactory(seqManager, graphEvent);
-		Properties contigViewProps = new Properties();
-		contigViewProps.setProperty(PREFERRED_MENU, "Apps.SeqViz");
-		contigViewProps.setProperty(TITLE, "Open Contig View");
-		contigViewProps.setProperty(COMMAND, "openContigView");
-		contigViewProps.setProperty(COMMAND_NAMESPACE, "seqViz");
-		contigViewProps.setProperty(IN_MENU_BAR, "true");
-		// settingsProps.setProperty(ENABLE_FOR, "network");
-		// mapReadsProps.setProperty(INSERT_SEPARATOR_BEFORE, "true");
-		contigViewProps.setProperty(MENU_GRAVITY, "9.0");
-		registerService(bc, contigViewTaskFactory, NodeViewTaskFactory.class, contigViewProps);
+		if (haveGUI) {
+			OpenContigViewTaskFactory contigViewTaskFactory = new OpenContigViewTaskFactory(seqManager, graphEvent);
+			Properties contigViewProps = new Properties();
+			contigViewProps.setProperty(PREFERRED_MENU, "Apps.SeqViz");
+			contigViewProps.setProperty(TITLE, "Open Contig View");
+			contigViewProps.setProperty(COMMAND, "openContigView");
+			contigViewProps.setProperty(COMMAND_NAMESPACE, "seqViz");
+			contigViewProps.setProperty(IN_MENU_BAR, "true");
+			settingsProps.setProperty(ENABLE_FOR, "network");
+			contigViewProps.setProperty(MENU_GRAVITY, "9.0");
+			registerService(bc, contigViewTaskFactory, NodeViewTaskFactory.class, contigViewProps);
+		}
 	}
 
 }

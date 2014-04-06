@@ -2,6 +2,7 @@ package edu.ucsf.rbvi.seqViz.internal.tasks;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.vizmap.VisualStyle;
@@ -20,10 +21,12 @@ import edu.ucsf.rbvi.seqViz.internal.model.DisplayGraphSettings;
 public class ChangeStyleTask extends AbstractTask {
 	
 	private CyNetworkView networkView;
-	private HashMap<String, VisualStyle> vs;
+	private Map<String, VisualStyle> vs;
 	private DisplayGraphSettings settings;
+	private ContigsManager manager;
 	
-	public ChangeStyleTask(CyNetworkView networkView, DisplayGraphSettings graphSettings, HashMap<String, VisualStyle> vs) {
+	public ChangeStyleTask(CyNetworkView networkView, DisplayGraphSettings graphSettings, 
+	                       Map<String, VisualStyle> vs) {
 		this.networkView = networkView;
 		this.settings = graphSettings;
 		this.vs = vs;
@@ -31,7 +34,6 @@ public class ChangeStyleTask extends AbstractTask {
 	
 	@Override
 	public void run(TaskMonitor arg0) throws Exception {
-		// TODO Auto-generated method stub
 		settings.networkViewSetting = vs;
 		if (vs.containsKey(settings.graphSelection))
 			vs.get(settings.graphSelection).apply(networkView);

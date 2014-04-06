@@ -28,6 +28,7 @@ public class SeqVizSettingsTask extends AbstractTask {
 		mapper = new ListSingleSelection<String>(mapperChoice);
 		this.manager = manager;
 		loadBridgingReads = false;
+		resetOSSettings();
 	}
 	
 	@Override
@@ -48,4 +49,33 @@ public class SeqVizSettingsTask extends AbstractTask {
 		}
 	}
 
+	public void resetOSSettings() {
+		// Get OS information and set seqManager
+		// Set default folder to look for bowtie and store bowtie index
+		String OS = System.getProperty("os.name").toLowerCase();
+		if (OS.indexOf("win") >= 0) {
+			loadBridgingReads = false;
+			mapDir = "";
+			tempDir = "%TEMP%\\";
+			mapper.setSelectedValue("bowtie");
+			try {
+				run(null);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		else if (OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") > 0 || OS.indexOf("sunos") >= 0 || OS.indexOf("mac") >= 0) {
+			loadBridgingReads = false;
+			mapDir = "";
+			tempDir = "/tmp/";
+			mapper.setSelectedValue("bowtie");
+			try {
+				run(null);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
 }

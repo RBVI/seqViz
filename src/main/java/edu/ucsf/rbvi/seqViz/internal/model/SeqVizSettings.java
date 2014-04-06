@@ -35,7 +35,9 @@ public class SeqVizSettings {
 	 * @param mapContigs File containing the contigs the mapper will map to.
 	 * @param contigReader A class that parses a contig file and stores it in ContigsManager.
 	 */
-	public SeqVizSettings(AbstractMapReadsTask mapReads, int threads, String mapper_dir, /*String options,*/ String temp_dir, /*, File contigs, File mapContigs*/ boolean loadBridgingReads) {
+	public SeqVizSettings(AbstractMapReadsTask mapReads, int threads, 
+	                      String mapper_dir, /*String options,*/ 
+	                      String temp_dir, /*, File contigs, File mapContigs*/ boolean loadBridgingReads) {
 		this.mapReads = mapReads;
 		this.threads = threads;
 	/*	this.options = options; */
@@ -52,5 +54,5 @@ public class SeqVizSettings {
 		threads = cores;
 		loadBridingReads = false;
 	}
-	
+
 }

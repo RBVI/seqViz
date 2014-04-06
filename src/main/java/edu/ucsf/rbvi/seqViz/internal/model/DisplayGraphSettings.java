@@ -1,6 +1,6 @@
 package edu.ucsf.rbvi.seqViz.internal.model;
 
-import java.util.HashMap;
+import java.util.Map;
 
 import org.cytoscape.view.vizmap.VisualStyle;
 
@@ -13,7 +13,7 @@ import org.cytoscape.view.vizmap.VisualStyle;
  */
 public class DisplayGraphSettings {
 	// Set of graphs that is to be displayed
-	public HashMap<String, VisualStyle> networkViewSetting;
+	public Map<String, VisualStyle> networkViewSetting;
 	// Specific graph from networkViewSetting to display
 	public String graphSelection;
 	public DisplayGraphSettings() {

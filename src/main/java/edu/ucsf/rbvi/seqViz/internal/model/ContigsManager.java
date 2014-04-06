@@ -6,6 +6,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import org.cytoscape.model.CyEdge;
@@ -15,6 +17,8 @@ import org.cytoscape.model.CyNetworkManager;
 import org.cytoscape.model.CyNode;
 import org.cytoscape.model.CyTable;
 import org.cytoscape.service.util.CyServiceRegistrar;
+import org.cytoscape.session.events.SessionLoadedEvent;
+import org.cytoscape.session.events.SessionLoadedListener;
 import org.cytoscape.task.read.LoadVizmapFileTaskFactory;
 import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.CyNetworkViewFactory;
@@ -37,7 +41,7 @@ import edu.ucsf.rbvi.seqViz.internal.CyActivator;
  * @author aywu
  *
  */
-public class ContigsManager {
+public class ContigsManager implements SessionLoadedListener {
 	
 	// Contains the default size for binning reads to generate graph.
 	// defaultBin controls binning of reads in Contigs View and
@@ -46,15 +50,15 @@ public class ContigsManager {
 	
 	// This variable used to contain all read pairs. No longer used in this
 	// program since it takes too much memory.
-	private HashMap<Long, ReadPair> readPairs;
+	private Map<Long, ReadPair> readPairs;
 	private List<ReadPair> readPairList;
 	// Contains a hash table of all contigs.
-	private HashMap<String,Contig> contigs;
+	private Map<String,Contig> contigs;
 	// Settings for how reads are mapped.
 	private SeqVizSettings settings;
 	// CyNetwork to be displayed.
 	private CyNetwork network;
-	private CyServiceRegistrar bundleContext;
+	private CyServiceRegistrar serviceRegistrar;
 	// Default VisualStyle for this ContigsManager
 	private VisualStyle vs;
 	// CyNetworkView for this assembly graph
@@ -62,39 +66,41 @@ public class ContigsManager {
 	// bin size for custom graphics graph and Contigs View, respectively
 	private int bin, binSize;
 	// Variable probably no longer used
-	private HashMap<String, ComplementaryGraphs> complementaryGraphs;
+	private Map<String, ComplementaryGraphs> complementaryGraphs;
 	// Name of the edges (for each possible combination of orientation)
-	private HashMap<String, CyEdge>	edgeNamesPlusPlus = new HashMap<String, CyEdge>(),
+	private Map<String, CyEdge>	edgeNamesPlusPlus = new HashMap<String, CyEdge>(),
 			edgeNamesPlusMinus = new HashMap<String, CyEdge>(),
 			edgeNamesMinusPlus = new HashMap<String, CyEdge>(),
 			edgeNamesMinusMinus = new HashMap<String, CyEdge>();
 	// Weight of edge (weights weighed by uniqueness of edge)
-	private HashMap<String, Double>	edgeWeightPlusPlus = new HashMap<String, Double>(),
+	private Map<String, Double>	edgeWeightPlusPlus = new HashMap<String, Double>(),
 			edgeWeightPlusMinus = new HashMap<String, Double>(),
 			edgeWeightMinusPlus = new HashMap<String, Double>(),
 			edgeWeightMinusMinus = new HashMap<String, Double>();
 	// Count of read-pair for each edge
-	private HashMap<String, Long>	edgeCountPlusPlus = new HashMap<String, Long>(),
+	private Map<String, Long>	edgeCountPlusPlus = new HashMap<String, Long>(),
 			edgeCountPlusMinus = new HashMap<String, Long>(),
 			edgeCountMinusPlus = new HashMap<String, Long>(),
 			edgeCountMinusMinus = new HashMap<String, Long>();
-	private HashMap<String, double []> paired_end_hist, paired_end_hist_rev, read_cov_hist, read_cov_hist_pos, read_cov_hist_rev;
+	private Map<String, double []> paired_end_hist, paired_end_hist_rev, read_cov_hist, read_cov_hist_pos, read_cov_hist_rev;
 	// Maximum and miminum value of the graphs (used to set the size of the graphs)
 	private double paired_end_min = 0, paired_end_max = 0, read_cov_max = 0, temp, read_cov_pos_max = 0, read_cov_rev_max = 0;
 	// Graphs displayed on Contigs View
-	private HashMap<String, ComplementaryGraphs> bpGraphsAll, bpGraphsUnique, bpGraphsBest, bpGraphsBestUnique;
+	private Map<String, ComplementaryGraphs> bpGraphsAll, bpGraphsUnique, bpGraphsBest, bpGraphsBestUnique;
 	// Edge width and other information
 	private EdgeStat bridgingReadsAll, bridgingReadsUnique, bridgingReadsBest, bridgingReadsBestUnique;
 	// Graphs displayed on custom graphics
 	private Histograms histAll, histUnique, histBest, histBestUnique;
+	private Map<String, Map<String,VisualStyle>> styles = 
+	                                  new HashMap<String, Map<String,VisualStyle>>();
 
-	public ContigsManager(CyServiceRegistrar bc, VisualStyle vs) {
+	public ContigsManager(CyServiceRegistrar bc) {
 		contigs = new HashMap<String, Contig>();
 		readPairs = new HashMap<Long, ReadPair>();
 		readPairList = new ArrayList<ReadPair>();
-		bundleContext = bc;
+		serviceRegistrar = bc;
 		this.vs = vs;
-		CyNetworkFactory networkFactory = bundleContext.getService(CyNetworkFactory.class);
+		CyNetworkFactory networkFactory = serviceRegistrar.getService(CyNetworkFactory.class);
 		this.network = networkFactory.createNetwork();
 		complementaryGraphs = new HashMap<String, ComplementaryGraphs>();
 		paired_end_hist = new HashMap<String, double[]>();
@@ -121,6 +127,9 @@ public class ContigsManager {
 		bin = defaultBin;
 		binSize = defaultBinSize;
 		settings = new SeqVizSettings();
+
+		// Register ourselves as a session loaded listener
+		serviceRegistrar.registerService(this, SessionLoadedListener.class, new Properties());
 	}
 
 	/**
@@ -132,7 +141,7 @@ public class ContigsManager {
 		readPairList = new ArrayList<ReadPair>();
 		
 		network.dispose();
-		CyNetworkFactory networkFactory = bundleContext.getService(CyNetworkFactory.class);
+		CyNetworkFactory networkFactory = serviceRegistrar.getService(CyNetworkFactory.class);
 		this.network = networkFactory.createNetwork();
 		complementaryGraphs = new HashMap<String, ComplementaryGraphs>();
 		paired_end_hist = new HashMap<String, double[]>();
@@ -253,7 +262,7 @@ public class ContigsManager {
 		thisPair.addReadMappingInfo(contigName, readInfo);
 	}
 	
-	private ReadPair bundle2Pair(HashMap<String, List<ReadMappingInfo>> readBundle) throws Exception {
+	private ReadPair bundle2Pair(Map<String, List<ReadMappingInfo>> readBundle) throws Exception {
 		ReadPair thisPair = new ReadPair();
 		for (String contigName: readBundle.keySet()) {
 			Contig contig = contigs.get(contigName);
@@ -283,10 +292,10 @@ public class ContigsManager {
 	 * is from the same contig of label String.
 	 * @throws Exception Throws exception if contig is not already loaded into ContigsManager.
 	 */
-	public void addRead(HashMap<String, List<ReadMappingInfo>> readBundle) throws Exception {
+	public void addRead(Map<String, List<ReadMappingInfo>> readBundle) throws Exception {
 		ReadPair thisPair = bundle2Pair(readBundle);
 	//	readPairList.add(thisPair);
-		HashMap<String, List<ReadMappingInfo>>	bestPair = new HashMap<String, List<ReadMappingInfo>>(),
+		Map<String, List<ReadMappingInfo>>	bestPair = new HashMap<String, List<ReadMappingInfo>>(),
 												uniquePair = new HashMap<String, List<ReadMappingInfo>>(),
 												bestUniquePair = new HashMap<String, List<ReadMappingInfo>>();
 		List<String>	bestPosContig = new ArrayList<String>(),
@@ -414,157 +423,6 @@ public class ContigsManager {
 		}
 	}
 	
-	/**
-	 * Function for loading edges (mate-paired reads which connects contigs) into the network
-	 * No longer used by seqViz.
-	 */
-	public void displayBridgingReads() {
-		HashMap<String, CyEdge>	edgeNamesPlusPlus = new HashMap<String, CyEdge>(),
-								edgeNamesPlusMinus = new HashMap<String, CyEdge>(),
-								edgeNamesMinusPlus = new HashMap<String, CyEdge>(),
-								edgeNamesMinusMinus = new HashMap<String, CyEdge>();
-		HashMap<String, Double>	edgeWeightPlusPlus = new HashMap<String, Double>(),
-								edgeWeightPlusMinus = new HashMap<String, Double>(),
-								edgeWeightMinusPlus = new HashMap<String, Double>(),
-								edgeWeightMinusMinus = new HashMap<String, Double>();
-		HashMap<String, Long>	edgeCountPlusPlus = new HashMap<String, Long>(),
-								edgeCountPlusMinus = new HashMap<String, Long>(),
-								edgeCountMinusPlus = new HashMap<String, Long>(),
-								edgeCountMinusMinus = new HashMap<String, Long>();
-		for (ReadPair p: readPairs.values()) {
-			if (p.getMate1Contigs() != null && p.getMate2Contigs() != null) {
-				double weight = p.weight();
-			for (String contig1: p.getMate1Contigs())
-				for (String contig2: p.getMate2Contigs()) {
-					if (! contig1.equals(contig2)) {
-						String thisContig1, thisContig2;
-						CyNode n1 = contigs.get(contig1).node,
-								n2 = contigs.get(contig2).node,
-								node1, node2;
-						List<ReadMappingInfo> contig1Reads, contig2Reads;
-						if (n1.getSUID() < n2.getSUID()) {
-							thisContig1 = contig1;
-							thisContig2 = contig2;
-							node1 = n1;
-							node2 = n2;
-							contig1Reads = p.getReadMappingInfoMate1(contig1);
-							contig2Reads = p.getReadMappingInfoMate2(contig2);
-						}
-						else {
-							thisContig1 = contig2;
-							thisContig2 = contig1;
-							node1 = n2;
-							node2 = n1;
-							contig2Reads = p.getReadMappingInfoMate1(contig1);
-							contig1Reads = p.getReadMappingInfoMate2(contig2);
-						}
-						for (ReadMappingInfo readInfo1: contig1Reads)
-							for (ReadMappingInfo readInfo2: contig2Reads) {
-								if (! readInfo1.sameContig() && ! readInfo2.sameContig()) {
-									CyEdge thisEdge;
-									String edgeName = thisContig1 + thisContig2;
-									boolean read1Orientation = readInfo1.strand(),
-											read2Orientation = readInfo2.strand();
-									if (read1Orientation && read2Orientation) {
-										if (edgeNamesPlusPlus.containsKey(edgeName))
-											thisEdge = edgeNamesPlusPlus.get(edgeName);
-										else {
-											thisEdge = network.addEdge(node1, node2, true);
-											edgeNamesPlusPlus.put(edgeName, thisEdge);
-										}
-										if (edgeWeightPlusPlus.containsKey(edgeName))
-											edgeWeightPlusPlus.put(edgeName, edgeWeightPlusPlus.get(edgeName) + weight);
-										else edgeWeightPlusPlus.put(edgeName, weight);
-										if (edgeCountPlusPlus.containsKey(edgeName))
-											edgeCountPlusPlus.put(edgeName, edgeCountPlusPlus.get(edgeName) + 1);
-										else edgeCountPlusPlus.put(edgeName, (long) 1);
-									}
-									else if (read1Orientation && ! read2Orientation) {
-										if (edgeNamesPlusMinus.containsKey(edgeName))
-											thisEdge = edgeNamesPlusMinus.get(edgeName);
-										else {
-											thisEdge = network.addEdge(node1, node2, true);
-											edgeNamesPlusMinus.put(edgeName, thisEdge);
-										}
-										if (edgeWeightPlusMinus.containsKey(edgeName))
-											edgeWeightPlusMinus.put(edgeName, edgeWeightPlusMinus.get(edgeName) + weight);
-										else edgeWeightPlusMinus.put(edgeName, weight);
-										if (edgeCountPlusMinus.containsKey(edgeName))
-											edgeCountPlusMinus.put(edgeName, edgeCountPlusMinus.get(edgeName) + 1);
-										else edgeCountPlusMinus.put(edgeName, (long) 1);
-									}
-									else if (! read1Orientation && read2Orientation) {
-										if (edgeNamesMinusPlus.containsKey(edgeName))
-											thisEdge = edgeNamesMinusPlus.get(edgeName);
-										else {
-											thisEdge = network.addEdge(node1, node2, true);
-											edgeNamesMinusPlus.put(edgeName, thisEdge);
-										}
-										if (edgeWeightMinusPlus.containsKey(edgeName))
-											edgeWeightMinusPlus.put(edgeName, edgeWeightMinusPlus.get(edgeName) + weight);
-										else edgeWeightMinusPlus.put(edgeName, weight);
-										if (edgeCountMinusPlus.containsKey(edgeName))
-											edgeCountMinusPlus.put(edgeName, edgeCountMinusPlus.get(edgeName) + 1);
-										else edgeCountMinusPlus.put(edgeName, (long) 1);
-									}
-									else if (! read1Orientation && ! read2Orientation) {
-										if (edgeNamesMinusMinus.containsKey(edgeName))
-											thisEdge = edgeNamesMinusMinus.get(edgeName);
-										else {
-											thisEdge = network.addEdge(node1, node2, true);
-											edgeNamesMinusMinus.put(edgeName, thisEdge);
-										}
-										if (edgeWeightMinusMinus.containsKey(edgeName))
-											edgeWeightMinusMinus.put(edgeName, edgeWeightMinusMinus.get(edgeName) + weight);
-										else edgeWeightMinusMinus.put(edgeName, weight);
-										if (edgeCountMinusMinus.containsKey(edgeName))
-											edgeCountMinusMinus.put(edgeName, edgeCountMinusMinus.get(edgeName) + 1);
-										else edgeCountMinusMinus.put(edgeName, (long) 1);
-									}
-								}
-							}
-					}
-				}
-			}
-		}
-		CyTable table = network.getDefaultEdgeTable();
-		if (table.getColumn("weight") == null)
-			table.createColumn("weight", Double.class, false);
-		if (table.getColumn("orientation") == null)
-			table.createColumn("orientation", String.class, false);
-		if (table.getColumn("reliability") == null)
-			table.createColumn("reliability", Double.class, false);
-		for (String s: edgeNamesPlusPlus.keySet()) {
-			table.getRow(edgeNamesPlusPlus.get(s).getSUID()).set(CyNetwork.NAME, s);
-			table.getRow(edgeNamesPlusPlus.get(s).getSUID()).set("weight", edgeWeightPlusPlus.get(s));
-			table.getRow(edgeNamesPlusPlus.get(s).getSUID()).set("orientation", "plusplus");
-			table.getRow(edgeNamesPlusPlus.get(s).getSUID()).set("reliability", edgeWeightPlusPlus.get(s) / edgeCountPlusPlus.get(s));
-		}
-		for (String s: edgeNamesPlusMinus.keySet()) {
-			table.getRow(edgeNamesPlusMinus.get(s).getSUID()).set(CyNetwork.NAME, s);
-			table.getRow(edgeNamesPlusMinus.get(s).getSUID()).set("weight", edgeWeightPlusMinus.get(s));
-			table.getRow(edgeNamesPlusMinus.get(s).getSUID()).set("orientation", "plusminus");
-			table.getRow(edgeNamesPlusMinus.get(s).getSUID()).set("reliability", edgeWeightPlusMinus.get(s) / edgeCountPlusMinus.get(s));
-		}
-		for (String s: edgeNamesMinusPlus.keySet()) {
-			table.getRow(edgeNamesMinusPlus.get(s).getSUID()).set(CyNetwork.NAME, s);
-			table.getRow(edgeNamesMinusPlus.get(s).getSUID()).set("weight", edgeWeightMinusPlus.get(s));
-			table.getRow(edgeNamesMinusPlus.get(s).getSUID()).set("orientation", "minusplus");
-			table.getRow(edgeNamesMinusPlus.get(s).getSUID()).set("reliability", edgeWeightMinusPlus.get(s) / edgeCountMinusPlus.get(s));
-		}
-		for (String s: edgeNamesMinusMinus.keySet()) {
-			table.getRow(edgeNamesMinusMinus.get(s).getSUID()).set(CyNetwork.NAME, s);
-			table.getRow(edgeNamesMinusMinus.get(s).getSUID()).set("weight", edgeWeightMinusMinus.get(s));
-			table.getRow(edgeNamesMinusMinus.get(s).getSUID()).set("orientation", "minusminus");
-			table.getRow(edgeNamesMinusMinus.get(s).getSUID()).set("reliability", edgeWeightMinusMinus.get(s) / edgeCountMinusMinus.get(s));
-		}
-		// Calculate log of weight
-		if (table.getColumn("weight_log") == null)
-			table.createColumn("weight_log", Double.class, false);
-		for (Long cyId: table.getPrimaryKey().getValues(Long.class))
-			table.getRow(cyId).set("weight_log", Math.log(table.getRow(cyId).get("weight", Double.class)));
-	}
-	
 	private void iterativeBridgingReads(EdgeStat stat, ReadPair p) {
 		if (p.getMate1Contigs() != null && p.getMate2Contigs() != null) {
 			double weight = p.weight();
@@ -662,108 +520,6 @@ public class ContigsManager {
 		}
 	}
 
-	/**
-	 * This method is currently not used by seqViz because it builds only one
-	 * set of statistics instead of all four currently available.
-	 * @param p
-	 */
-	private void iterativeBridgingReads(ReadPair p) {
-		if (p.getMate1Contigs() != null && p.getMate2Contigs() != null) {
-			double weight = p.weight();
-		for (String contig1: p.getMate1Contigs())
-			for (String contig2: p.getMate2Contigs()) {
-				if (! contig1.equals(contig2)) {
-					String thisContig1, thisContig2;
-					CyNode n1 = contigs.get(contig1).node,
-							n2 = contigs.get(contig2).node,
-							node1, node2;
-					List<ReadMappingInfo> contig1Reads, contig2Reads;
-					if (n1.getSUID() < n2.getSUID()) {
-						thisContig1 = contig1;
-						thisContig2 = contig2;
-						node1 = n1;
-						node2 = n2;
-						contig1Reads = p.getReadMappingInfoMate1(contig1);
-						contig2Reads = p.getReadMappingInfoMate2(contig2);
-					}
-					else {
-						thisContig1 = contig2;
-						thisContig2 = contig1;
-						node1 = n2;
-						node2 = n1;
-						contig2Reads = p.getReadMappingInfoMate1(contig1);
-						contig1Reads = p.getReadMappingInfoMate2(contig2);
-					}
-					for (ReadMappingInfo readInfo1: contig1Reads)
-						for (ReadMappingInfo readInfo2: contig2Reads) {
-							if (! readInfo1.sameContig() && ! readInfo2.sameContig()) {
-								CyEdge thisEdge;
-								String edgeName = thisContig1 + thisContig2;
-								boolean read1Orientation = readInfo1.strand(),
-										read2Orientation = readInfo2.strand();
-								if (read1Orientation && read2Orientation) {
-									if (edgeNamesPlusPlus.containsKey(edgeName))
-										thisEdge = edgeNamesPlusPlus.get(edgeName);
-									else {
-										thisEdge = network.addEdge(node1, node2, true);
-										edgeNamesPlusPlus.put(edgeName, thisEdge);
-									}
-									if (edgeWeightPlusPlus.containsKey(edgeName))
-										edgeWeightPlusPlus.put(edgeName, edgeWeightPlusPlus.get(edgeName) + weight);
-									else edgeWeightPlusPlus.put(edgeName, weight);
-									if (edgeCountPlusPlus.containsKey(edgeName))
-										edgeCountPlusPlus.put(edgeName, edgeCountPlusPlus.get(edgeName) + 1);
-									else edgeCountPlusPlus.put(edgeName, (long) 1);
-								}
-								else if (read1Orientation && ! read2Orientation) {
-									if (edgeNamesPlusMinus.containsKey(edgeName))
-										thisEdge = edgeNamesPlusMinus.get(edgeName);
-									else {
-										thisEdge = network.addEdge(node1, node2, true);
-										edgeNamesPlusMinus.put(edgeName, thisEdge);
-									}
-									if (edgeWeightPlusMinus.containsKey(edgeName))
-										edgeWeightPlusMinus.put(edgeName, edgeWeightPlusMinus.get(edgeName) + weight);
-									else edgeWeightPlusMinus.put(edgeName, weight);
-									if (edgeCountPlusMinus.containsKey(edgeName))
-										edgeCountPlusMinus.put(edgeName, edgeCountPlusMinus.get(edgeName) + 1);
-									else edgeCountPlusMinus.put(edgeName, (long) 1);
-								}
-								else if (! read1Orientation && read2Orientation) {
-									if (edgeNamesMinusPlus.containsKey(edgeName))
-										thisEdge = edgeNamesMinusPlus.get(edgeName);
-									else {
-										thisEdge = network.addEdge(node1, node2, true);
-										edgeNamesMinusPlus.put(edgeName, thisEdge);
-									}
-									if (edgeWeightMinusPlus.containsKey(edgeName))
-										edgeWeightMinusPlus.put(edgeName, edgeWeightMinusPlus.get(edgeName) + weight);
-									else edgeWeightMinusPlus.put(edgeName, weight);
-									if (edgeCountMinusPlus.containsKey(edgeName))
-										edgeCountMinusPlus.put(edgeName, edgeCountMinusPlus.get(edgeName) + 1);
-									else edgeCountMinusPlus.put(edgeName, (long) 1);
-								}
-								else if (! read1Orientation && ! read2Orientation) {
-									if (edgeNamesMinusMinus.containsKey(edgeName))
-										thisEdge = edgeNamesMinusMinus.get(edgeName);
-									else {
-										thisEdge = network.addEdge(node1, node2, true);
-										edgeNamesMinusMinus.put(edgeName, thisEdge);
-									}
-									if (edgeWeightMinusMinus.containsKey(edgeName))
-										edgeWeightMinusMinus.put(edgeName, edgeWeightMinusMinus.get(edgeName) + weight);
-									else edgeWeightMinusMinus.put(edgeName, weight);
-									if (edgeCountMinusMinus.containsKey(edgeName))
-										edgeCountMinusMinus.put(edgeName, edgeCountMinusMinus.get(edgeName) + 1);
-									else edgeCountMinusMinus.put(edgeName, (long) 1);
-								}
-							}
-						}
-				}
-			}
-		}
-	}
-	
 	private void saveBridgingReads(EdgeStat stat, String title) {
 		CyTable table = network.getDefaultEdgeTable();
 		String	weight = "weight" + (title == null ? "" : ":" + title),
@@ -852,29 +608,6 @@ public class ContigsManager {
 		}
 	}
 
-	public void iterativeCreateHist(ReadPair pair) {
-		for (String s: pair.getAllContigs()) {
-			double [] paired_end_hist = this.paired_end_hist.get(s),
-					paired_end_hist_rev = this.paired_end_hist_rev.get(s),
-					read_cov_hist = this.read_cov_hist.get(s),
-					read_cov_hist_pos = this.read_cov_hist_pos.get(s),
-					read_cov_hist_rev = this.read_cov_hist_rev.get(s);
-			for (ReadMappingInfo readInfo: pair.getReadMappingInfo(s)) {
-				read_cov_hist[readInfo.locus() / binSize] += (double) readInfo.read().length() / (double) binSize;
-				if (readInfo.strand())
-					read_cov_hist_pos[readInfo.locus() / binSize] += (double) readInfo.read().length() / (double) binSize;
-				else
-					read_cov_hist_rev[readInfo.locus() / binSize] -= (double) readInfo.read().length() / (double) binSize;
-				if (! readInfo.sameContig()) {
-					if (readInfo.strand())
-						paired_end_hist[readInfo.locus() / binSize] += (double) readInfo.read().length() / (double) binSize;
-					else
-						paired_end_hist_rev[readInfo.locus() / binSize] -= (double) readInfo.read().length() / (double) binSize;
-				}
-			}
-		}
-	}
-	
 	private void saveHist(Histograms hist, String title) {
 		CyTable table = network.getDefaultNodeTable();
 		String	paired_end_hist_string = "paired_end_hist" + (title == null ? "" : ":" + title),
@@ -1124,7 +857,7 @@ public class ContigsManager {
 		}
 	}
 	
-	private void iterativeBpGraph(HashMap<String, ComplementaryGraphs> complementaryGraphs, ReadPair pair) {
+	private void iterativeBpGraph(Map<String, ComplementaryGraphs> complementaryGraphs, ReadPair pair) {
 		for (String contigName: pair.getAllContigs()) {
 			ComplementaryGraphs y = complementaryGraphs.get(contigName);
 			if (y == null) {
@@ -1142,7 +875,7 @@ public class ContigsManager {
 					pairContigs.add(null);
 				}
 				for (String c: pairContigs) {
-					HashMap<String, long[]> covGraphs;
+					Map<String, long[]> covGraphs;
 					if (read.strand()) covGraphs = y.pos;
 					else covGraphs = y.rev;
 					long[] covGraph;
@@ -1194,7 +927,7 @@ public class ContigsManager {
 					pairContigs.add(null);
 				}
 				for (String c: pairContigs) {
-					HashMap<String, long[]> covGraphs;
+					Map<String, long[]> covGraphs;
 					if (read.strand()) covGraphs = y.pos;
 					else covGraphs = y.rev;
 					long[] covGraph;
@@ -1223,7 +956,7 @@ public class ContigsManager {
 		}
 	}
 
-	private void saveBpGraphs(HashMap<String, ComplementaryGraphs> complementaryGraphs, String title) {
+	private void saveBpGraphs(Map<String, ComplementaryGraphs> complementaryGraphs, String title) {
 		CyTable table = network.getDefaultNetworkTable();
 		for (String s: contigs.keySet()) {
 			ArrayList<String> colNames = new ArrayList<String>();
@@ -1297,7 +1030,7 @@ public class ContigsManager {
 				pairContigs.add(null);
 			}
 			for (String c: pairContigs) {
-				HashMap<String, long[]> covGraphs;
+				Map<String, long[]> covGraphs;
 				if (read.strand()) covGraphs = y.pos;
 				else covGraphs = y.rev;
 				long[] covGraph;
@@ -1329,7 +1062,7 @@ public class ContigsManager {
 				pairContigs.add(null);
 			}
 			for (String c: pairContigs) {
-				HashMap<String, long[]> covGraphs;
+				Map<String, long[]> covGraphs;
 				if (read.strand()) covGraphs = y.pos;
 				else covGraphs = y.rev;
 				long[] covGraph;
@@ -1451,12 +1184,12 @@ public class ContigsManager {
 	 * Display network
 	 */
 	public void displayNetwork() {
-		CyNetworkManager networkManager = bundleContext.getService(CyNetworkManager.class);
+		CyNetworkManager networkManager = serviceRegistrar.getService(CyNetworkManager.class);
 		networkManager.addNetwork(network);
 		
-		CyNetworkViewFactory networkViewFactory = bundleContext.getService(CyNetworkViewFactory.class);
+		CyNetworkViewFactory networkViewFactory = serviceRegistrar.getService(CyNetworkViewFactory.class);
 		CyNetworkView myView = networkViewFactory.createNetworkView(network);
-		CyNetworkViewManager networkViewManager = bundleContext.getService(CyNetworkViewManager.class);
+		CyNetworkViewManager networkViewManager = serviceRegistrar.getService(CyNetworkViewManager.class);
 		networkViewManager.addNetworkView(myView);
 		
 		networkView = myView;
@@ -1476,6 +1209,55 @@ public class ContigsManager {
 			networkView.updateView();
 		}
 	}
+
+	public Map<String,VisualStyle> getVisualStyle(String styleName) {
+		if (styles.containsKey(styleName))
+			return styles.get(styleName);
+		return null;
+	}
+
+	public Collection<String> getStyleNames() {
+		return styles.keySet();
+	}
+
+
+	// TODO: replace this with code that creates the styles on-the-fly
+	public void reloadVisualStyles() {
+		// Load new Visual Style for seqViz
+		VisualMappingManager vmmServiceRef = serviceRegistrar.getService(VisualMappingManager.class);
+		InputStream stream = CyActivator.class.getResourceAsStream("/seqVizStyle.xml");
+		VisualStyle style = null;
+		if (stream != null) {
+				LoadVizmapFileTaskFactory loadVizmapFileTaskFactory =  
+					serviceRegistrar.getService(LoadVizmapFileTaskFactory.class);
+				Set<VisualStyle> vsSet = loadVizmapFileTaskFactory.loadStyles(stream);
+				if (vsSet != null)
+					for (VisualStyle vs: vsSet) {
+						vmmServiceRef.addVisualStyle(vs);
+						String styleTitle, title, graph;
+						vs.setTitle(styleTitle = vs.getTitle().split("_")[0]);
+						if (styleTitle.equals("No Histogram")) style = vs;
+						String[] styleTitle2 = styleTitle.split(":");
+						title = styleTitle2[0];
+						if (styleTitle2.length == 2)
+							graph = styleTitle2[1];
+						else graph = null;
+						Map<String, VisualStyle> thisStyle;
+						if (styles.containsKey(title))
+							thisStyle = styles.get(title);
+						else {
+							thisStyle = new HashMap<String, VisualStyle>();
+							styles.put(title, thisStyle);
+						}
+						thisStyle.put(graph, vs);
+					}
+			}
+		}
+
+	public void handleEvent(SessionLoadedEvent e) {
+		reloadVisualStyles();
+		reset();
+	}
 	
 	/**
 	 * Inner class holding statistics calculated on edges.
@@ -1483,8 +1265,8 @@ public class ContigsManager {
 	 *
 	 */
 	private class EdgeStat {
-		public HashMap<String, Double>	edgeWeightPlusPlus, edgeWeightPlusMinus, edgeWeightMinusPlus, edgeWeightMinusMinus;
-		public HashMap<String, Long>	edgeCountPlusPlus, edgeCountPlusMinus, edgeCountMinusPlus, edgeCountMinusMinus;
+		public Map<String, Double>	edgeWeightPlusPlus, edgeWeightPlusMinus, edgeWeightMinusPlus, edgeWeightMinusMinus;
+		public Map<String, Long>	edgeCountPlusPlus, edgeCountPlusMinus, edgeCountMinusPlus, edgeCountMinusMinus;
 	
 		public EdgeStat() {
 			edgeWeightPlusPlus = new HashMap<String, Double>();
@@ -1504,7 +1286,7 @@ public class ContigsManager {
 	 *
 	 */
 	private class Histograms {
-		public HashMap<String, double []> paired_end_hist, paired_end_hist_rev, read_cov_hist, read_cov_hist_pos, read_cov_hist_rev;
+		public Map<String, double []> paired_end_hist, paired_end_hist_rev, read_cov_hist, read_cov_hist_pos, read_cov_hist_rev;
 		
 		public Histograms() {
 			paired_end_hist = new HashMap<String, double[]>();

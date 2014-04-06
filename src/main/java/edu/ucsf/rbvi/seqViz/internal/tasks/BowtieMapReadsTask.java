@@ -23,15 +23,36 @@ public class BowtieMapReadsTask extends AbstractMapReadsTask {
 	public File mate1;
 	@Tunable(description="File containing reads of mate2", params="input=true;fileCategory=unspecified")
 	public File mate2;
-	@Tunable(description="Format of read files")
+	@Tunable(description="Format of read file encoding", groups={"Advanced Options"}, 
+	         params="displayState=collapsed")
+	public ListSingleSelection<String> eFormat;
+	@Tunable(description="Format of read files", groups={"Advanced Options"}, 
+	         params="displayState=collapsed")
 	public ListSingleSelection<String> format;
+	@Tunable(description="Alignment type", groups={"Advanced Options"}, 
+	         params="displayState=collapsed")
+	public ListSingleSelection<String> alignmentType;
+	@Tunable(description="Alignment presets", groups={"Advanced Options"}, 
+	         params="displayState=collapsed")
+	public ListSingleSelection<String> presets;
 	
 	public BowtieMapReadsTask(ContigsManager contigs/*, String mate1, String mate2 */) {
 		super(contigs/*, mate1, mate2*/);
-		String [] fileFormat = {"phred33", "phred64"};
+		String [] eFileFormat = {"phred33", "phred64"};
+		eFormat = new ListSingleSelection<String>(eFileFormat);
+		eFormat.setSelectedValue("phred33");
+
+		String [] fileFormat = {"fastq", "fasta"};
 		format = new ListSingleSelection<String>(fileFormat);
-		format.setSelectedValue("phred33");
-		// TODO Auto-generated constructor stub
+		format.setSelectedValue("fastq");
+
+		String [] typeArray = {"end-to-end", "local"};
+		alignmentType = new ListSingleSelection<String>(typeArray);
+		alignmentType.setSelectedValue("end-to-end");
+
+		String [] presetArray = {"very-fast", "fast", "sensitive", "very-sensitive"};
+		presets = new ListSingleSelection<String>(presetArray);
+		presets.setSelectedValue("fast");
 	}
 
 	@Override
@@ -53,12 +74,13 @@ public class BowtieMapReadsTask extends AbstractMapReadsTask {
 		}
 		mate1Reads.close();
 		long readEstimate = mate1.length() * (sample / 4) / sampleSize;
+		String indexFileBase = contigs.getSettings().temp_dir + contigsFile.getName();
 
 		String[] bowtieCommands = {
 						contigs.getSettings().mapper_dir + "bowtie2-build",
 						"-f",
 						contigsFile.getAbsolutePath(),
-						contigs.getSettings().temp_dir + contigsFile.getName()
+						indexFileBase
 		};
 		arg0.showMessage(TaskMonitor.Level.INFO, "Executing: "+strArray(bowtieCommands));
 		Process index = Runtime.getRuntime().exec(bowtieCommands);
@@ -68,21 +90,29 @@ public class BowtieMapReadsTask extends AbstractMapReadsTask {
 			throw new Exception("bowtie2-build exited with error " + index.exitValue());
 		}
 
+		// Fix up our arguments
+		String mateFormat = "-q";
+		if (format.getSelectedValue().equals("fasta"))
+			mateFormat="-f";
+
+		String presetArgument = "--"+presets.getSelectedValue();
+		String alignmentArg = "--"+alignmentType.getSelectedValue();
+		if (alignmentType.getSelectedValue().equals("local"))
+			presetArgument = presetArgument+"-local";
+
+
 		String[] bowtieCommands2 = {
 						contigs.getSettings().mapper_dir + "bowtie2-align",
-						"-q",
-					 	"--end-to-end",
-					 	"--fast",
-						"-p",
-						""+contigs.getSettings().threads,
-					 	"--"+format.getSelectedValue(),
-					 	"-a",
-						"-x",
-						contigs.getSettings().temp_dir + contigsFile.getName(),
-						"-1",
-					 	mate1.getAbsolutePath(),
-						"-2",
-						mate2.getAbsolutePath()
+						mateFormat,															// Reads are fastq
+					 	alignmentArg, 													// end-to-end or local
+					 	presetArgument,													// Could be --very-fast, 
+																										// --sensitive, or --very-sensitive
+						"-p", ""+contigs.getSettings().threads, // number of threads
+					 	"--"+eFormat.getSelectedValue(),				// Encoding value (phred33 or phred64)
+					 	"-a", 																	// Search for all alignments
+						"-x", indexFileBase,										// Base name for index files
+						"-1", mate1.getAbsolutePath(), 					// Mate1
+						"-2", mate2.getAbsolutePath() 					// Mate2
 		};
 		arg0.showMessage(TaskMonitor.Level.INFO, "Executing: "+strArray(bowtieCommands2));
 		Process p = Runtime.getRuntime().exec(bowtieCommands2);
