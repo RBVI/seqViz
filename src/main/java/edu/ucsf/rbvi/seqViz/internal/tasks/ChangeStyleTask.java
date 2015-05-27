@@ -35,6 +35,7 @@ public class ChangeStyleTask extends AbstractTask {
 	
 	@Override
 	public void run(TaskMonitor arg0) throws Exception {
+		arg0.setTitle(getTitle());
 		if (settings.getHistogramType().equals(hType))
 			return;
 

@@ -42,6 +42,7 @@ public class OpenContigViewTask extends AbstractNodeViewTask {
 	@Override
 	public void run(TaskMonitor arg0) throws Exception {
 	//	ContigView panel = new ContigView(manager, contig);
+		arg0.setTitle(getTitle());
 		final ContigView panel = new ContigView(cyNetwork, suid);
 		event.addDisplayGraphEventListener(panel);
 		event.fireGraphSelectionChange();

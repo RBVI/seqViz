@@ -58,6 +58,8 @@ public class BowtieMapReadsTask extends AbstractMapReadsTask {
 
 	@Override
 	public void run(TaskMonitor arg0) throws Exception {
+		arg0.setTitle(getTitle());
+
 		// TODO Auto-generated method stub
 		if (contigManager.getSettings().mate1 != null && !contigManager.getSettings().mate1.isEmpty());
 		if (contigManager.getSettings().mate2 != null && !contigManager.getSettings().mate2.isEmpty());

@@ -27,6 +27,7 @@ public class ChangeDisplayGraphTask extends AbstractTask implements
 
 	@Override
 	public void run(TaskMonitor arg0) throws Exception {
+		arg0.setTitle(getTitle());
 		settings.getDisplayGraphEvent().getDisplayGraphSettings().setReadType(rType);
 		settings.fireGraphSelectionChange();
 	}
