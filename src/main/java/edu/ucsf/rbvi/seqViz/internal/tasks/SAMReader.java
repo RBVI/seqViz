@@ -74,7 +74,6 @@ public class SAMReader extends AbstractMapOutputReader {
 							readBundle.put(contig, temp);
 						}
 						temp.add(new ReadMappingInfo(read1, score, locus, !reverse, sameContig));
-					//	contigs.addRead(contig, new ReadMappingInfo(read1, score, locus, !reverse, sameContig));
 					}
 					if (mate2) {
 						if (read2 == null)
@@ -85,7 +84,6 @@ public class SAMReader extends AbstractMapOutputReader {
 							readBundle.put(contig, temp);
 						}
 						temp.add(new ReadMappingInfo(read2, score, locus, !reverse, sameContig));
-					//	contigs.addRead(contig, new ReadMappingInfo(read2, score, locus, !reverse, sameContig));
 					}
 				}
 				prevReadName = readName;

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.cytoscape.work.AbstractTask;
+import org.cytoscape.work.ProvidesTitle;
 import org.cytoscape.work.TaskMonitor;
 import org.cytoscape.work.Tunable;
 import org.cytoscape.work.util.ListSingleSelection;
@@ -47,6 +48,11 @@ public class SeqVizSettingsTask extends AbstractTask {
 				manager.getSettings().loadBridingReads = loadBridgingReads;
 			}
 		}
+	}
+
+	@ProvidesTitle
+	public String getTitle() {
+		return "SeqViz Settings";
 	}
 
 	public void resetOSSettings() {

@@ -61,12 +61,12 @@ import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyTable;
 import org.cytoscape.view.model.CyNetworkView;
 
-import edu.ucsf.rbvi.seqViz.internal.CyActivator;
 import edu.ucsf.rbvi.seqViz.internal.events.DisplayGraphEvent;
 import edu.ucsf.rbvi.seqViz.internal.events.DisplayGraphEventListener;
 import edu.ucsf.rbvi.seqViz.internal.model.ComplementaryGraphs;
 import edu.ucsf.rbvi.seqViz.internal.model.Contig;
 import edu.ucsf.rbvi.seqViz.internal.model.ContigsManager;
+import edu.ucsf.rbvi.seqViz.internal.model.ContigsManager.ReadType;
 
 /**
  * A SplitPanel containing code for displaying detailed histograms of read coverage. Create a
@@ -196,7 +196,8 @@ public class ContigView implements DisplayGraphEventListener {
 		for (final String s: graphs) {
 			HashMap<String, List<Long>> allGraph = new HashMap<String, List<Long>>();
 			HashMap<String, double[]> allY = new HashMap<String, double[]>(), allX = new HashMap<String, double[]>();
-			for (String type: CyActivator.graphTypes) {
+			for (ReadType rType: ReadType.values()) {
+				String type = rType.toString();
 				List<Long> graph = table.getRow(network.getSUID()).getList(s + (type == null ? "" : ":" + type), Long.class);
 				if (graph != null) {
 					double[] y = new double[graph.size()];
@@ -227,7 +228,8 @@ public class ContigView implements DisplayGraphEventListener {
 					sameContigGraphRev = newGraphColor;
 				randomColor = Color.GRAY;
 			}
-			for (String t: CyActivator.graphTypes) {
+			for (ReadType rType: ReadType.values()) {
+				String t = rType.toString();
 				if (allX.containsKey(t) && allY.containsKey(t)) {
 					histoPanel2.setGraph(t);
 					histoPanel2.addGraph(s, randomColor, allX.get(t), allY.get(t));
@@ -651,7 +653,7 @@ public class ContigView implements DisplayGraphEventListener {
 	public JSplitPane splitPane() {return splitPane;}
 	
 	public void graphSelectionChange(DisplayGraphEvent event) {
-		histoPanel2.setGraph(event.getDisplayGraphSettings().graphSelection);
+		histoPanel2.setGraph(event.getDisplayGraphSettings().getReadType().toString());
 		histoPanel2.repaint();
 	}
 	

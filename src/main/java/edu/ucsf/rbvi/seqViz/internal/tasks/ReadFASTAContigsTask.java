@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 
+import org.cytoscape.work.ProvidesTitle;
 import org.cytoscape.work.TaskMonitor;
 import org.cytoscape.work.Tunable;
 
@@ -47,6 +48,11 @@ public class ReadFASTAContigsTask extends AbstractReadContigsTask {
 	//	System.out.println(seq.toString());
 		manager.addContig(header, new Contig(seq.toString()));
 		manager.displayContigs();
+	}
+
+	@ProvidesTitle
+	public String getTitle() {
+		return "Reading contig file";
 	}
 
 }

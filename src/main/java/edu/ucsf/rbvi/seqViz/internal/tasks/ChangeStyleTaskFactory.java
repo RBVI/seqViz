@@ -12,19 +12,20 @@ import org.cytoscape.work.TaskIterator;
 
 import edu.ucsf.rbvi.seqViz.internal.model.ContigsManager;
 import edu.ucsf.rbvi.seqViz.internal.model.DisplayGraphSettings;
+import edu.ucsf.rbvi.seqViz.internal.utils.StyleMaker.HistogramType;
 
 public class ChangeStyleTaskFactory extends AbstractNetworkViewTaskFactory {
 
-	private Map<String, VisualStyle> vs;
+	private HistogramType hType;
 	private DisplayGraphSettings settings;
 	
-	public ChangeStyleTaskFactory(DisplayGraphSettings graphSettings, Map<String, VisualStyle> vs) {
-		this.vs = vs;
+	public ChangeStyleTaskFactory(DisplayGraphSettings graphSettings, HistogramType hType) {
+		this.hType = hType;
 		settings = graphSettings;
 	}
 
 	public TaskIterator createTaskIterator(CyNetworkView arg0) {
-		return new TaskIterator(new ChangeStyleTask(arg0, settings, vs));
+		return new TaskIterator(new ChangeStyleTask(arg0, settings, hType));
 	}
 
 }

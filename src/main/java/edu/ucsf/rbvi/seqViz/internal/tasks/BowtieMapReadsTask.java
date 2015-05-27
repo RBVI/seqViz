@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 
+import org.cytoscape.work.ProvidesTitle;
 import org.cytoscape.work.TaskMonitor;
 import org.cytoscape.work.Tunable;
 import org.cytoscape.work.util.ListSingleSelection;
@@ -36,8 +37,8 @@ public class BowtieMapReadsTask extends AbstractMapReadsTask {
 	         params="displayState=collapsed")
 	public ListSingleSelection<String> presets;
 	
-	public BowtieMapReadsTask(ContigsManager contigs/*, String mate1, String mate2 */) {
-		super(contigs/*, mate1, mate2*/);
+	public BowtieMapReadsTask(ContigsManager contigManager/*, String mate1, String mate2 */) {
+		super(contigManager/*, mate1, mate2*/);
 		String [] eFileFormat = {"phred33", "phred64"};
 		eFormat = new ListSingleSelection<String>(eFileFormat);
 		eFormat.setSelectedValue("phred33");
@@ -58,10 +59,10 @@ public class BowtieMapReadsTask extends AbstractMapReadsTask {
 	@Override
 	public void run(TaskMonitor arg0) throws Exception {
 		// TODO Auto-generated method stub
-		if (contigs.getSettings().mate1 != null && !contigs.getSettings().mate1.isEmpty());
-		if (contigs.getSettings().mate2 != null && !contigs.getSettings().mate2.isEmpty());
+		if (contigManager.getSettings().mate1 != null && !contigManager.getSettings().mate1.isEmpty());
+		if (contigManager.getSettings().mate2 != null && !contigManager.getSettings().mate2.isEmpty());
 
-		ReadFASTAContigsTask contigReader = new ReadFASTAContigsTask(contigs);
+		ReadFASTAContigsTask contigReader = new ReadFASTAContigsTask(contigManager);
 		contigReader.contigsFile = contigsFile;
 		contigReader.run(arg0);
 
@@ -74,10 +75,10 @@ public class BowtieMapReadsTask extends AbstractMapReadsTask {
 		}
 		mate1Reads.close();
 		long readEstimate = mate1.length() * (sample / 4) / sampleSize;
-		String indexFileBase = contigs.getSettings().temp_dir + contigsFile.getName();
+		String indexFileBase = contigManager.getSettings().temp_dir + contigsFile.getName();
 
 		String[] bowtieCommands = {
-						contigs.getSettings().mapper_dir + "bowtie2-build",
+						contigManager.getSettings().mapper_dir + "bowtie2-build",
 						"-f",
 						contigsFile.getAbsolutePath(),
 						indexFileBase
@@ -86,7 +87,7 @@ public class BowtieMapReadsTask extends AbstractMapReadsTask {
 		Process index = Runtime.getRuntime().exec(bowtieCommands);
 		index.waitFor();
 		if (index.exitValue() != 0) {
-			contigs.reset();
+			contigManager.reset();
 			throw new Exception("bowtie2-build exited with error " + index.exitValue());
 		}
 
@@ -102,12 +103,12 @@ public class BowtieMapReadsTask extends AbstractMapReadsTask {
 
 
 		String[] bowtieCommands2 = {
-						contigs.getSettings().mapper_dir + "bowtie2-align",
+						contigManager.getSettings().mapper_dir + "bowtie2-align",
 						mateFormat,															// Reads are fastq
 					 	alignmentArg, 													// end-to-end or local
 					 	presetArgument,													// Could be --very-fast, 
 																										// --sensitive, or --very-sensitive
-						"-p", ""+contigs.getSettings().threads, // number of threads
+						"-p", ""+contigManager.getSettings().threads, // number of threads
 					 	"--"+eFormat.getSelectedValue(),				// Encoding value (phred33 or phred64)
 					 	"-a", 																	// Search for all alignments
 						"-x", indexFileBase,										// Base name for index files
@@ -116,27 +117,24 @@ public class BowtieMapReadsTask extends AbstractMapReadsTask {
 		};
 		arg0.showMessage(TaskMonitor.Level.INFO, "Executing: "+strArray(bowtieCommands2));
 		Process p = Runtime.getRuntime().exec(bowtieCommands2);
-		AbstractMapOutputReader reader = new SAMReader(contigs);
+		AbstractMapOutputReader reader = new SAMReader(contigManager);
 		reader.readReads(p.getInputStream(), arg0, readEstimate);
 		p.waitFor();
 		if (p.exitValue() != 0) {
-			contigs.reset();
+			contigManager.reset();
 			throw new Exception("bowtie2-align exited with error " + p.exitValue());
 		}
 		File indexFile;
 		String[] suffixes = {".1.bt2", ".2.bt2", ".3.bt2", ".4.bt2", ".rev.1.bt2", ".rev.2.bt2"};
 		for (String suffix : suffixes) {
-			indexFile = new File(contigs.getSettings().temp_dir + contigsFile.getName() + suffix);
+			indexFile = new File(contigManager.getSettings().temp_dir + contigsFile.getName() + suffix);
 			indexFile.delete();
 		}
 
-		// contigs.displayBridgingReads();
-		// contigs.createHist(200);
-		// contigs.loadBpGraphs(50);
-		contigs.saveBpGraphs();
-		contigs.saveBridgingReads();
-		contigs.saveHist();
-		contigs.displayNetwork();
+		contigManager.saveBpGraphs();
+		contigManager.saveBridgingReads();
+		contigManager.saveHist();
+		contigManager.displayNetwork();
 		System.gc();
 	}
 
@@ -155,5 +153,10 @@ public class BowtieMapReadsTask extends AbstractMapReadsTask {
 			ret += s+" ";
 		}
 		return ret;
+	}
+
+	@ProvidesTitle
+	public String getTitle() {
+		return "Mapping reads";
 	}
 }

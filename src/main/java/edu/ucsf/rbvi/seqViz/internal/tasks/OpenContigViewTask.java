@@ -11,6 +11,7 @@ import org.cytoscape.model.CyNode;
 import org.cytoscape.task.AbstractNodeViewTask;
 import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.View;
+import org.cytoscape.work.ProvidesTitle;
 import org.cytoscape.work.TaskMonitor;
 
 import edu.ucsf.rbvi.seqViz.internal.events.FireDisplayGraphEvent;
@@ -85,6 +86,11 @@ public class OpenContigViewTask extends AbstractNodeViewTask {
 				
 			}
 		});
+	}
+
+	@ProvidesTitle
+	public String getTitle() {
+		return "Opening contig view";
 	}
 
 }

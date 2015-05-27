@@ -12,7 +12,7 @@ import edu.ucsf.rbvi.seqViz.internal.model.ContigsManager;
 
 public abstract class AbstractMapReadsTask extends AbstractTask implements ObservableTask {
 
-	protected ContigsManager contigs;
+	protected ContigsManager contigManager;
 	
 	/**
 	 * AbstractMaperReaders is an abstract class that serves as an interface to map reads to
@@ -22,11 +22,7 @@ public abstract class AbstractMapReadsTask extends AbstractTask implements Obser
 	 * 
 	 * @param contigs ContigManager that stores the mapping results.
 	 */
-	public AbstractMapReadsTask(ContigsManager contigs/*, String mate1, String mate2 */) {
-		this.contigs = contigs;
-	/*	if (contigs.getSettings().mate1 != null && ! contigs.getSettings().mate1.isEmpty())
-			this.mate1 = contigs.getSettings().mate1.get(0);
-		if (contigs.getSettings().mate2 != null && ! contigs.getSettings().mate2.isEmpty())
-			this.mate2 = contigs.getSettings().mate2.get(0); */
+	public AbstractMapReadsTask(ContigsManager contigs) {
+		this.contigManager = contigs;
 	}
 }

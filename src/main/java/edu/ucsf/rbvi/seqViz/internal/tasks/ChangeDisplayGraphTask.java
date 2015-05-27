@@ -2,20 +2,22 @@ package edu.ucsf.rbvi.seqViz.internal.tasks;
 
 import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.ObservableTask;
+import org.cytoscape.work.ProvidesTitle;
 import org.cytoscape.work.TaskMonitor;
 
 import edu.ucsf.rbvi.seqViz.internal.events.FireDisplayGraphEvent;
+import edu.ucsf.rbvi.seqViz.internal.model.ContigsManager.ReadType;
 import edu.ucsf.rbvi.seqViz.internal.model.DisplayGraphSettings;
 
 public class ChangeDisplayGraphTask extends AbstractTask implements
 		ObservableTask {
 
 	private FireDisplayGraphEvent settings;
-	private String graph;
+	private ReadType rType;
 	
-	public ChangeDisplayGraphTask(FireDisplayGraphEvent graphEvent, String graph) {
+	public ChangeDisplayGraphTask(FireDisplayGraphEvent graphEvent, ReadType rType) {
 		settings = graphEvent;
-		this.graph = graph;
+		this.rType = rType;
 	}
 	
 	public <R> R getResults(Class<? extends R> arg0) {
@@ -25,8 +27,13 @@ public class ChangeDisplayGraphTask extends AbstractTask implements
 
 	@Override
 	public void run(TaskMonitor arg0) throws Exception {
-		settings.getDisplayGraphEvent().getDisplayGraphSettings().graphSelection = graph;
+		settings.getDisplayGraphEvent().getDisplayGraphSettings().setReadType(rType);
 		settings.fireGraphSelectionChange();
+	}
+
+	@ProvidesTitle
+	public String getTitle() {
+		return "Changing to "+rType.toString()+" reads";
 	}
 
 }

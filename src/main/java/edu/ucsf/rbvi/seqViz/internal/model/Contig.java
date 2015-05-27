@@ -16,6 +16,8 @@ public class Contig {
 	private String sequence;
 	CyNode node;
 	private List<ReadMappingInfo> reads;
+	private String name;
+	private int length;
 	
 	/**
 	 * Contig contains the sequence of the contig, along with the
@@ -25,9 +27,14 @@ public class Contig {
 	 */
 	public Contig(String sequence) {
 		this.sequence = sequence;
+		this.length = sequence.length();
 		this.reads = new ArrayList<ReadMappingInfo>();
 		this.node = null;
+		this.name = null;
 	}
+
+	public String getName() { return name; }
+	public void setName(String name) { this.name = name; }
 	
 	/**
 	 * Add a ReadMappingInfo to the Contig.
@@ -65,4 +72,5 @@ public class Contig {
 	 * @return
 	 */
 	public String sequence() {return sequence;}
+	public int length() {return length;}
 }
