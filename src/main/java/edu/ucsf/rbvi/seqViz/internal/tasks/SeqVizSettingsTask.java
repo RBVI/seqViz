@@ -35,7 +35,8 @@ public class SeqVizSettingsTask extends AbstractTask {
 	@Override
 	public void run(TaskMonitor arg0) throws Exception {
 		// TODO Auto-generated method stub
-		arg0.setTitle(getTitle());
+		if (arg0 != null)
+			arg0.setTitle(getTitle());
 		if (mapper.getSelectedValue().equals(mapperChoice[0])) {
 			int cores = Runtime.getRuntime().availableProcessors();
 			cores = Math.max(cores-2, 1);
